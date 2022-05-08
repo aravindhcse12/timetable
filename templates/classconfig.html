@@ -1,0 +1,883 @@
+{% if access == 'dept_type' %}
+    {% extends 'deptadmin.html' %}
+        
+{% else %}
+       {% extends 'base.html' %}
+{% endif %}
+
+{% block ajax %}
+
+<!-- this script is for classconfig.html to perform ajax operations -->
+
+
+{% endblock %}
+  
+ 
+{% block title %} Class configuration {% endblock %}
+ 
+ 
+ 
+{% block body %}
+<script
+src="https://code.jquery.com/jquery-3.2.1.min.js"
+integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+crossorigin="anonymous"></script>
+
+
+<script type="text/javascript">
+
+$(document).bind("ajaxSend", function(){
+       $("#spinner").show();
+     }).bind("ajaxComplete", function(){
+       $("#spinner").hide();
+     });
+
+$(document ).ready(function() {   
+
+    $("#lab_list").change(function(){
+       
+    $("#textarea1").text(function(i,origText){
+    //alert(!$.trim($('#textarea1')).length);
+       
+        if(!$.trim($('#textarea1').val())) {
+            // paragraph with id="lab-list" is empty, your code goes here
+            return $('#lab_list').val();
+        }
+        else
+            return  origText+","+$('#lab_list').val(); 
+        });
+    });
+
+    $("#id_sem").on('change',function(){
+        //alert("changed");
+        
+    var course = $('#id_course').val();
+    var sem = $('#id_sem').val();
+    var concat= $('#id_course').val()+"@"+$('#id_sem').val();
+    //alert(concat);
+    data1={table:concat};
+    //alert(data1['table']);
+          
+           $.ajax({
+              type: "POST",
+              url: "/gettable",
+              data:JSON.stringify(data1),
+              contentType: "application/json",
+              success:function(resp){
+                //alert(resp);
+                $('#load_data').html(resp.data);
+            
+                }
+            });
+  
+      });
+
+
+  $('#button1').click(function(){
+    //alert($('#id_course').val()+','+$('#id_sem').val()+','+$('#id_faculty').val()
+        
+     //   +','+ $('#subject_theory').val() +','+$('#periods').val()); 
+
+   
+    if($('#id_course').val() != null && $('#id_sem').val() != null &&
+         $('#periods').val().length >= 1 && $('#subject_theory').val() != null 
+         
+         && $('#id_faculty').val().length >= 1 && $('#split').val().length>=1) 
+    {
+
+        var pattern=/[^0123456789,]/g;
+
+        var split= $('#split').val();
+        if(split.match(pattern) || split.endsWith(",") || split.startsWith(",") || split.includes(",,"))
+        {
+            alert(" invalid characters in split_periods");
+        }
+        else{
+
+
+            var spl_arr=new Array();
+            spl_arr=split.split(",");
+         
+            if(spl_arr.includes('0'))
+            {
+                alert("0 periods can not be assigned");
+            }
+
+            else
+            {
+                var sum=0;
+
+                for(var i=0;i<spl_arr.length;i++)
+                {
+                    sum+=Number(spl_arr[i]);
+                }
+           
+            //alert(sum+" "+spl_arr.length);
+
+            if(sum !=Number( $('#periods').val()))
+            {
+                alert("totel periods are not equal to splitted periods sum");
+                //split number is equal is not equal to total_periods
+            }
+            else{
+
+                var index=Number($('#subject_theory').val())
+
+                // alert(sub);
+
+                //let arr=sub.split("--");
+
+                var json_subject= JSON.parse('{{ all_subject | tojson | safe}}');
+
+
+                theory_data={
+
+                table_name: $('#id_course').val()+"@"+$('#id_sem').val(),
+                faculty: $('#id_faculty').val(),
+                subject: json_subject[index][1],
+                period: $('#periods').val(),
+                type: json_subject[index][4],
+                split_p: $('#split').val()
+
+                };
+               
+                //alert(theory_data);
+            
+                $.ajax({
+                url: "/send",
+                type: "POST",
+                data:JSON.stringify(theory_data),
+                contentType: "application/json",
+
+                success: function(resp){
+                        //alert(resp);
+                        //$('#table-responsive1').hide();
+                        $('#load_data').html(resp.data);
+                        //alert(resp.data);
+
+                        if(resp.distinct) alert(resp.distinct);
+                },
+                });
+            }//split periods not equal to total periods
+            }// 0 present in arr
+        }
+    }
+    else{
+
+        alert("no course selected ");
+    }   
+
+
+  });
+
+  $('#button2').click(function(){
+      
+
+    if($('#id_course').val() != null && $('#id_sem').val() != null &&
+         $('#id_period_lab').val().length >= 1 && $('#subject_lab').val() != null 
+         
+         && $('#textarea1').val().length > 0 && $('#id_count_fac_lab').val().length >=1 && $('#split').val().length>=1) 
+    {
+   
+        var pattern=/[^0123456789,]/g;
+
+        var split= $('#split').val();
+
+        if(split.match(pattern) || split.endsWith(",") || split.startsWith(",") || split.includes(",,"))
+        {
+            alert(" invalid characters in split_periods");
+        }
+        else
+        {
+            var spl_arr=new Array();
+
+            spl_arr=split.split(",");
+         
+            if(spl_arr.includes('0'))
+            {
+                alert("0 periods can not be assigned");
+            }            
+            else
+            {
+                var sum=0;
+
+                for(var i=0;i<spl_arr.length;i++)
+                {
+                    sum+=Number(spl_arr[i]);
+                }
+           
+                //alert(sum+" "+spl_arr.length);
+
+                if(sum !=Number( $('#id_period_lab').val()))
+                {
+                    alert("totel periods are not equal to splitted periods sum");
+                    //split number is equal is not equal to total_periods
+                }
+                else
+                {
+                    var index=Number($('#subject_lab').val())
+
+                    //alert(sub);
+                    //alert($('#lab_list').val());
+
+                // alert(sub);
+
+                //let arr=sub.split("--");
+
+                var json_subject= JSON.parse('{{ all_subject | tojson | safe}}');
+
+                    //let arr=sub.split("--");
+                    let flag=0;
+                    //alert(arr);
+                    const lablist=$('#textarea1').val().split(",");
+
+                    const count = {};
+                    //alert(lablist);
+
+                    for (const element of lablist) 
+                    {
+                        if (count[element]) {
+                            flag=1;
+                        } else {
+                            count[element] = 1;
+                        }
+                    }
+
+                    if(flag==0)
+                    {
+                        theory_data={
+
+                        table_name: $('#id_course').val()+"@"+$('#id_sem').val(),
+                        labname: $('#textarea1').val(),
+                        subject: json_subject[index][1],
+                        period: $('#id_period_lab').val(),
+                        type: json_subject[index][4],
+                        faculty_count: $('#id_count_fac_lab').val(),
+                        split_p: $('#split').val()
+
+                        };
+
+                        //alert(theory_data['type']);
+
+                        $.ajax({
+                            url: "/send",
+                            type: "POST",
+                            data:JSON.stringify(theory_data),
+                            contentType: "application/json",
+
+                            success: function(resp){
+                                    //alert(resp);
+                                    //$('#table-responsive1').hide();
+                                    $('#load_data').html(resp.data);
+                                    //alert(resp.data);
+                                    //$("#lab_list").reset();
+
+                                    $("#textarea1").text("");
+
+                                    if(resp.distinct) alert(resp.distinct);
+                            },
+                        });
+                        
+                    }
+                    else
+                    {
+                        alert("labs should be unique");
+                    }
+                }
+
+            }
+        }
+    }
+    else{
+
+        alert("no course selected ");
+    }   
+
+
+  });
+
+  $('#button3').click(function(){
+      
+
+      if($('#id_course').val() != null && $('#id_sem').val() != null && $('#id_project_periods').val().length >= 1 && $('#id_subject_project').val() != null && $('#id_proj_fac_count').val().length >=1 && $('#split').val().length>=1 ) 
+      {
+        var pattern=/[^0123456789,]/g;
+
+        var split= $('#split').val();
+
+        if(split.match(pattern) || split.endsWith(",") || split.startsWith(",") || split.includes(",,"))
+        {
+            alert(" invalid characters in split_periods");
+        }
+        else
+        {
+            var spl_arr=new Array();
+            spl_arr=split.split(",");
+         
+            if(spl_arr.includes('0'))
+            {
+                alert("0 periods can not be assigned");
+            }            
+            else
+            {
+                var sum=0;
+
+                for(var i=0;i<spl_arr.length;i++)
+                {
+                    sum+=Number(spl_arr[i]);
+                }
+           
+                //alert(sum+" "+spl_arr.length);
+
+                if(sum !=Number( $('#id_project_periods').val()))
+                {
+                    alert("totel periods are not equal to splitted periods sum");
+                    //split number is equal is not equal to total_periods
+                }
+                else
+                {  
+                    var index=Number($('#id_subject_project').val());
+  
+                    //let arr=sub.split("--");
+
+                    var json_subject= JSON.parse('{{ all_subject | tojson | safe}}');
+
+                    theory_data={
+
+                    table_name: $('#id_course').val()+"@"+$('#id_sem').val(),
+                    subject: json_subject[index][1],
+                    period: $('#id_project_periods').val(),
+                    type: json_subject[index][4],
+                    faculty_count: $('#id_proj_fac_count').val(),
+                    split_p: $('#split').val()
+
+                    };     
+                     // alert(theory_data['table_name']);
+        
+                    $.ajax({
+                    url: "/send",
+                    type: "POST",
+                    data:JSON.stringify(theory_data),
+                    contentType: "application/json",
+  
+                    success: function(resp){
+                            //alert(resp);
+                            //$('#table-responsive1').hide();
+                            $('#load_data').html(resp.data);
+                            //alert(resp.data);
+                            if(resp.distinct) alert(resp.distinct);
+                    },
+                    });             
+                }          
+            }
+        }
+          
+      }
+      else{
+  
+          alert("no course selected ");
+      }   
+  
+  
+    });
+
+
+  //If check_all checked then check all table rows
+	$("#check_all").on("click", function () {
+        //alert($("input:checkbox").prop("checked"))
+
+		if ($("input:checkbox").prop("checked")) {
+			$("input:checkbox[name='row-check']").prop("checked", true);
+		} else {
+			$("input:checkbox[name='row-check']").prop("checked", false);
+		}
+	});
+
+	// Check each table row checkbox
+	$("input:checkbox[name='row-check']").on("change", function () {
+		var total_check_boxes = $("input:checkbox[name='row-check']").length;
+		var total_checked_boxes = $("input:checkbox[name='row-check']:checked").length;
+
+        //alert(total_check_boxes+" "+ total_checked_boxes);
+
+		// If all checked manually then check check_all checkbox
+		if (total_check_boxes === total_checked_boxes) {
+			$("#check_all").prop("checked", true);
+		}
+		else {
+			$("#check_all").prop("checked", false);
+		}
+	});
+	
+	$("#delete_selected").on("click", function () {
+		var ids = '';
+		var comma = '';
+		$("input:checkbox[name='row-check']:checked").each(function() {
+			ids = ids + comma + this.value;
+			comma = ',';			
+		});	
+        
+		//alert(ids);
+        var name=$('#id_course').val()+"@"+$('#id_sem').val();
+        
+		if(ids.length > 0) {
+			$.ajax({
+				type: "POST",
+				contentType: 'application/json;charset=UTF-8',
+				url: "/delete_conf",
+				data: JSON.stringify({'ids': ids,'table':name, 'check_all':$("input:checkbox").prop("checked")}),
+				dataType: "json",
+				
+				success: function(resp) {
+
+                    //alert(resp.data)
+                    $('#load_data').html(resp.data);
+                    
+				},
+				error: function(jqXHR, textStatus, errorThrown) {
+					alert(jqXHR);
+				}
+			});
+		} 
+	});
+  });
+</script>
+<div class="container-fluid">
+<h2>Class Configuration</h2>
+        <div class="jumbotron jumbotron-fluid" style="background-color:#1A6DC3;color:white; padding: 30px">
+
+            <h4 style="font-size:16px" padding: 10px;>Step 1: Select the class and regulation to configure.</h4>
+            <h4 style="font-size:16px" padding: 10px;>Step 2: Select the teacher and the subject(only the configured subject and respected regulation subject for that class will be shown)</h4>
+            <h4 style="font-size:16px" padding: 10px;>Step 3: Enter the number of periods for the teacher/subject <b>(for a complete week)</b></h4>
+            <h4 style="font-size:16px" padding: 10px;>Step 4: Click on add.</h4>
+
+        </div>
+
+
+    <div class="jumbotron my-auto">
+        <center>
+            <div id="spinner" style="display:none;" align="center">
+            <img id="img-spinner" align="center" height="20%" width="20%" src="{{ url_for('static', filename='spin.gif') }}" alt="Loading"/>
+                                
+            </div>
+
+        </center>
+        <div class="shadow-lg p-3 mb-5 bg-white rounded">
+            <div class="table-responsive">
+            <table class="table" style="background-color:white">
+                <tr>
+                    <td style="text-align:right;">
+                        Course:
+                    </td>
+                    <td>
+                        <select class="form-control" id="id_course" onchange="selectsem()">
+                            <option value="" disabled="disabled" selected="true">Select course</option>
+                            {%for i in all_course %}
+                            <option value="{{i.name}}">{{i.name}}</option>
+                            {% endfor %}
+                            
+                        </select>
+                    </td>
+
+ 
+                    <td style="text-align:right;">
+                        semister:
+                    </td>
+
+                    <td>
+                    <select class="form-control" id="id_sem" onchange="subjectfun()">
+                            
+                        </select>
+                    </td>
+
+                    <td style="text-align:right;">
+                        split_periods:
+                    </td>
+                    <td>
+                    <input type="text" class="form-control" id="split" >
+                            
+                    </td>
+            
+                </tr>
+            </table>
+
+
+            </div>
+
+        
+        <div class="table-responsive">
+
+            <table id="teacher_subject" class="table" style="background-color:white">
+
+                <tr>
+                    <td >
+                        <h6 style="font-size:20px; padding-left:40px; text-align:left;"> Configure<br> Theory subjects</h6>
+                    </td>
+
+                    <td>
+                    <label for="id_dept" >Dept:</label>
+                    <select class="form-control" id="id_dept" onchange="faculty_dept()">
+                            <option value='' disabled='disabled' selected='true'>--select dept--</option>>
+                            {% for i in all_dept %}
+                            <option value="{{i.branch}}">{{i.branch}}</option>
+                            {% endfor %} 
+                        </select>
+                    </td>
+
+
+                    <td>
+                        <label for="id_faculty" align="left">Faculty :</label>
+
+                        <!--<input type="text" class="form-control" id="id_faculty" list="teacher_list">
+
+                            <datalist id="teacher_list">
+                              {% for i in all_teacher %}
+                                <option value="{{i.name}}">{{i.name}}</option>
+                                {% endfor %} >                           
+                            </datalist> -->
+
+                            <select class="form-control" id="id_faculty">
+                            
+                            </select>
+
+                    </td>
+                    <td>
+                         <label>Subject(Theory):</label>
+                            <select class="form-control" id="subject_theory">
+                            
+                            </select>
+                    <td>
+
+
+                    <label for="periods">No. of periods: (for whole week)</label>
+                    <input type="number" min="1" class="form-control" id="periods">
+                    </td>
+
+                    <input type="hidden" min="1" class="form-control" id="type_th" value="THEORY">
+
+                    <td >
+                        <label for="button">Add record</label></br>
+                        <button id="button1" type="button" class="btn btn-primary">Add</button>
+                    </td>
+
+                </tr>
+            </table>
+            
+        </div>
+        
+
+        <div class="table-responsive">
+
+            <table id="teacher_subject" class="table" style="background-color:white">
+
+                <tr>
+                    <td rowspan="2" style=" padding-top:50px; padding-left:50px;">
+                        <h6 style="font-size:20px; padding: 12px;text-align:left;" > Configure<br> Lab subjects<br>of this class</h6>
+                    </td>
+
+                    <td>
+                        <label for="lab_list">LAB?:</label>
+                        <select class="form-control" id="lab_list">
+                            <option value="" disabled="disabled" selected="true">Select course</option>
+                            {% for i in all_lab %}
+                            <option value="{{i.name}}">{{i.name}}</option>
+                            {% endfor %} 
+                        </select>  
+                            
+
+                    </td>
+                    <td>
+                    <div class="form-outline" style="padding-top:32px">
+                        <textarea height="auto" type="text" class="form-control" id="textarea1" rows="1"  style="display:block;" readonly ></textarea>
+                        
+                      </div>
+                    </td>
+
+                    <td>
+                    <label for="subject_lab">Subject(Lab) :</label>
+                    <select class="form-control" id="subject_lab">
+                            
+                    </select>                           
+                    </td>
+        
+                </tr>
+
+                    <tr>
+                    <td>
+                     <label for="id_period_lab">No. of periods: (for whole week)</label>
+                    <input type="number" min="1" class="form-control" id="id_period_lab">
+                    </td>
+
+
+                    <td>
+                     <label for="id_count_fac_lab">Count of faculty allotment? </label>
+                    <input type="number" min="1" class="form-control" id="id_count_fac_lab">
+                    </td>
+
+                    <td>
+                       
+                        <label for="button">Add record</label></br>
+                        
+                        <button id="button2" type="button" class="btn btn-primary">Add</button>
+                    </td>
+
+
+                </tr>
+            </table>
+            </div>
+
+            <div class="table-responsive">
+
+                <table id="" class="table" style="background-color:white">
+    
+                    <tr>
+                        <td >
+                            <h6 style="font-size:20px; padding-left:40px; text-align:left;">
+                                 Configure<br> Project<br> of this class</h6>
+                        </td>
+
+                        <td style="align-items:left;">
+                             <label>Subject(Project):</label>
+                                <select class="form-control" id="id_subject_project" >
+                    
+                                </select>
+                        <td>
+    
+    
+                        <label for="periods">No. of periods: (for whole week)</label>
+                        <input type="number" min="1" class="form-control" id="id_project_periods">
+                        </td>
+
+                        <td>
+                            <label for="periods">Count of faculty allotment?</label>
+                           <input type="number" min="1" class="form-control" id="id_proj_fac_count">
+                        </td>
+            
+                        <td>
+                            <label for="button">Add record</label></br>
+                            <button id="button3" type="button" class="btn btn-primary">Add</button>
+                        </td>
+    
+                    </tr>
+                </table>
+            </div>
+          
+            <div class="table-responsive" id="table-responsive1">
+
+                <table  class="table table-bordered" style="background-color:white" >
+                    <caption id="cap"></caption>
+                    <thead>
+                      <tr>
+                        <th style="text-align:center">Sr.No</th>
+                        <th style="text-align:center">Subject</th>
+                        <th style="text-align:center">Type</th>
+                        <th style="text-align:center">Teacher</th>
+                        <th style="text-align:center">Class</th>
+                        <th style="text-align:center">Lab Name</th>
+                        <th style="text-align:center">Total Periods</th>
+                        <th style="text-align:center">Faculty count</th>
+                        <th style="text-align:center">Split Period</th>
+                        <th style="text-align:center"><input id="check_all" type="checkbox"></th>
+                        
+                      </tr>
+                    </thead>
+                        <tbody id="load_data">
+                            
+                        </tbody>
+                    </table>
+                </div>
+            <div>
+            <center> <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#myModal">Delete</button></center>
+            </div>
+         
+
+
+        <div id="myModal" class="modal fade" role="dialog">
+          <div class="modal-dialog">
+
+            <!-- Modal content-->
+            <div class="modal-content">
+              <div class="modal-header" style="background-color:red;color:white;">
+                
+                <h4 class="modal-title"><b> <span class="glyphicon glyphicon-warning-sign"></span> Warning...</b></h4>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+              </div>
+              <div class="modal-body">
+                 <h4 class="modal-title">This will delete all the entries of the currently selected class/section</h4>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button id="delete_selected" type="button" class="btn btn-default" data-dismiss="modal">Delete</button>
+              </div>
+            </div>
+             </div>
+          </div>
+
+            </div>
+        </div>
+    </div>
+    <br/>
+
+
+</div>
+<script>
+    function faculty_dept()
+    {
+        
+        var dept=document.getElementById("id_dept").value;
+        
+        var json_faculty_data= JSON.parse('{{ all_teacher | tojson | safe}}');
+      
+
+        str1="<option value='' disabled='disabled' selected='true'>Select Faculty</option>";
+
+        var len=json_faculty_data.length;
+       
+
+        for(i in json_faculty_data)
+        {
+            if(json_faculty_data[i][1]==dept)
+            {
+                str1+="<option>"+json_faculty_data[i][0]+"</option>";
+            }
+
+        }
+        document.getElementById('id_faculty').innerHTML=str1;
+
+
+    }
+
+
+    function selectsem()
+    {
+        //alert("updatesemister");
+
+        var semupdate=document.getElementById("id_course").value;
+
+        //alert(semupdate);
+
+        var jsonvar1 = JSON.parse('{{ json_object | tojson | safe}}');
+
+        //alert(jsonvar1);
+
+        var sem= "<option value='' disabled='disabled' selected='true'>Select course</option>";
+
+        //var arr1=new Array("1-1","1-2","2-1","2-2","3-1","3-2","4-1","4-2","5-1","5-2","6-1","6-2","7-1","7-2","8-1","8-2");
+
+        //alert(arr1);
+        //<option value="" disabled="disabled" selected="true">Select course</option>
+
+        var str1=sem;
+
+        for(i1 in jsonvar1)
+        {
+            if(i1==semupdate)
+            {
+                //alert("true");
+                loop=jsonvar1[i1];
+
+
+                //alert(loop/2);
+                var k=1;
+                for(j=1;j<=Math.ceil(loop/2);j++) 
+                {
+                    for(k=1;k<=2;k++)
+                    {
+                        if(j==Math.ceil(loop/2) && loop%2==1)
+                        {
+                            str1+="<option>"+String(j)+"-"+String(k)+"</option>";
+                            break;
+                        }
+                        else
+                        {
+                            str1+="<option>"+String(j)+"-"+String(k)+"</option>";
+                        }
+                    }
+                    
+                }
+                break;
+            }
+        }
+
+       //alert(str1);
+
+    document.getElementById('id_sem').innerHTML=str1;
+
+
+
+}
+function subjectfun()
+{
+
+    //alert('hai');
+
+    var course_selected=document.getElementById("id_course").value;
+
+    var sem_selected=document.getElementById("id_sem").value;
+
+    //alert(sem_selected+' '+course_selected);
+
+    var json_subject= JSON.parse('{{ all_subject | tojson | safe}}');
+
+    var sublist=json_subject.length;
+
+    var i=0;
+
+    var sem= "<option value='' disabled='disabled' selected='true'>Select subject</option>";
+    let str1=sem;
+    let str2=sem;
+    let str3=sem;
+    //alert(json_subject);
+    for(i=0; i<sublist;i++)
+    {
+        //alert(json_subject[i][4]);
+
+        if(json_subject[i][2]==course_selected && json_subject[i][3]==sem_selected)
+        {
+            
+            //alert("pass");
+            //alert((json_subject[i][4].slice(0,4)));
+            if(json_subject[i][4]=="THEORY" || json_subject[i][4].slice(0,8)=="ELECTIVE")
+            {
+                str1+="<option value="+i+">"+json_subject[i][1]+"--"+json_subject[i][4]+"</option>";
+                document.getElementById("subject_theory").innerHTML=str1;
+                //alert(str1);
+            }
+
+            else if(json_subject[i][4]=="LAB")
+            {
+            str2+="<option value="+i+">"+json_subject[i][1]+"</option>";
+            document.getElementById("subject_lab").innerHTML=str2;
+            //alert(str2);
+            }
+            else if(json_subject[i][4]=="PROJECT"){
+
+            str3+="<option value="+i+">"+json_subject[i][1]+"</option>";
+            document.getElementById("id_subject_project").innerHTML=str3;
+            //alert(str3);
+
+            }
+            else{
+                    break;
+
+            }
+
+
+        }
+        else{
+
+        //alert("no subject under this course");
+        
+        document.getElementById("subject_lab").innerHTML=str2;
+        document.getElementById("subject_theory").innerHTML=str1;
+        document.getElementById("id_subject_project").innerHTML=str3;
+        }
+
+    }
+
+    //alert(str2);       
+} 
+</script>
+
+
+{% endblock %}

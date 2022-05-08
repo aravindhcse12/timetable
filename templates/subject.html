@@ -1,0 +1,536 @@
+{% if access == 'dept_type' %}
+    {% extends 'deptadmin.html' %}
+        
+{% else %}
+       {% extends 'base.html' %}
+{% endif %}
+
+{% block ajax %}
+<!--<script
+src="https://code.jquery.com/jquery-3.2.1.min.js"
+integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+crossorigin="anonymous"></script>-->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script type="text/javascript">
+// $(document ).ready(function() {   
+  
+// $("#myInput").on("change", function () {
+//     var value = $(this).val().toLowerCase();
+//     alert(value);
+//     $("#myTable tbody tr").filter(function () {
+//        $(this).toggle($(this.children[1]).text().toLowerCase().indexOf(value) > -1)              
+//     });
+
+$(document).ready(function(){
+  $("#myInput").on("keyup", function() {
+    var value = $(this).val().toLowerCase();
+
+    $("#myTable tbody tr").filter(function() {
+      $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+    });
+  });
+
+  $("#check_all").on("click", function () {
+        alert("Delete all");
+		if ($("input:checkbox").prop("checked")) {
+			$("input:checkbox[name='row-check']").prop("checked", true);
+		} else {
+			$("input:checkbox[name='row-check']").prop("checked", false);
+		}
+	});
+    	// Check each table row checkbox
+	$("input:checkbox[name='row-check']").on("change", function () {
+		var total_check_boxes = $("input:checkbox[name='row-check']").length;
+		var total_checked_boxes = $("input:checkbox[name='row-check']:checked").length;
+
+        //alert(total_check_boxes+" "+ total_checked_boxes);
+
+		// If all checked manually then check check_all checkbox
+		if (total_check_boxes === total_checked_boxes) {
+			$("#check_all").prop("checked", true);
+		}
+		else {
+			$("#check_all").prop("checked", false);
+		}
+	});
+	
+	$("#delete_selected").on("click", function () {
+		var ids = '';
+		var comma = '';
+		$("input:checkbox[name='row-check']:checked").each(function() {
+			ids = ids + comma + this.value;
+			comma = ',';			
+		});	
+
+		//alert(ids);
+		if(ids.length > 0) {
+			$.ajax({
+				type: "POST",
+				contentType: 'application/json;charset=UTF-8',
+				url: "/deletesubject",
+				data: JSON.stringify({'ids': ids }),
+				dataType: "json",
+				cache: false,
+				success: function(msg) {
+					
+                    location.reload(msg);
+				},
+				error: function(jqXHR, textStatus, errorThrown) {
+					alert(textStatus);
+                    location.reload(false);
+				}
+			});
+		} 
+	});
+  });
+
+</script>
+{% endblock %}   
+
+{% block title %} Add subjects {% endblock %}
+ 
+ 
+ 
+{% block body %}
+
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col md-12">
+ 
+            <div class="jumbotron p-3">
+ 
+                <h2>Add<b> Subject</b>  <button type="button"  class="btn btn-success float-right"
+                data-toggle="modal" data-target="#mymodal">Add New Subject</button> </h2>
+                    
+                <input type="text" class="form-control" id="myInput"/>
+
+                <br>
+ 
+                {% with messages = get_flashed_messages() %}
+ 
+                {% if messages %}
+ 
+                {% for message in messages %}
+ 
+                <div class="alert alert-success alert-dismissable" role="alert">
+ 
+                    <button type="button" class="close" data-dismiss="alert" aria-label="close">
+ 
+                        <span aria-hidden="true">x</span>
+ 
+                    </button>
+ 
+ 
+                {{message}}
+ 
+ 
+                </div>
+ 
+ 
+                {% endfor %}
+ 
+                {% endif %}
+                {% endwith %}
+ 
+               
+                <table class="table table-hover table-striped" id="myTable">
+                   <thead id="thead">
+                    <tr class="table-primary">
+ 
+                        <td ><b>Sno</b></td>
+                        <td ><b>Name</b></td>
+
+                        <td ><b>Faculty Dept</b></td>
+
+                        <td ><b>Course</b></td>
+
+                        <td ><b>semister</b></td>
+
+                        <td ><b>Type</b></td>
+                       
+                        <td style="text-align:left;">
+                           
+                           <button class="btn btn-danger btn-xs" type="submit" id="delete_selected">
+                            Delete</button>
+                            <input id="check_all" type="checkbox">
+                        
+                        </td>
+                    </tr>
+                    </thead>
+
+
+                <tbody id="#tbody">      
+                   {% for row in subjects %}
+                    <tr>
+                        <td >{{loop.index}}</td>
+                        <td >{{row.name}}</td>
+                        <td>{{row.dept}}
+                        <td >{{row.course}}</td>
+
+                        <td >{{row.sem}}</td>
+                        <td >{{row.subjecttype}}</td>
+
+                        <td style="text-align:left;">
+                            <!--<<a  class="btn btn-warning btn-xs" data-toggle="modal" data-target="#modaledit{{row.id}}">Edit</a>-->
+
+                            <!--<a href="/deletesubject/{{row.id}}" class="btn btn-danger
+                                 btn-xs" onclick="return confirm('Are You Sure To Delete ?')
+                                 ">Delete</a> -->
+
+                                
+
+                            <input  id="row-check" name="row-check" type="checkbox" value="{{row.id}}">
+                        </td>
+ 
+                    </tr>
+                
+ 
+<!-- Modal Edit/update class-->
+<div id="modaledit{{row.id}}" class="modal fade" role="dialog">
+   <div class="modal-dialog">
+ 
+ 
+      <div class="modal-content">
+ 
+ 
+         <div class="modal-header">
+ 
+ 
+            <h4 class="modal-title">Update Information</h4>
+ 
+ 
+         </div>
+ 
+ 
+         <div class="modal-body">
+ 
+ 
+            <form action="{{url_for('subjectedit')}}" method="POST">
+ 
+ 
+               <div class="form-group">
+ 
+ 
+                <label>NAME:</label>
+                   <input type="hidden"  name="id" value="{{row.id}}">
+ 
+                    <input type="text" class="form-control" name="name" value="{{row.name}}" required>
+
+                <label>Dept:</label>
+
+                <select class="form-control" aria-label="Default select example" name="dept" id="dept"  required>
+                
+                    
+                    {% for i in all_dept %}
+
+                        <option value='{{i.name}}'>{{i.name}}</option>
+
+                    {% endfor  %}
+
+                </select>
+
+                
+                <label>Course:</label>
+
+                  <select class="form-control" aria-label="Default select example" name="course" id="semisterlistupdate" onchange="updatesemister()" required>
+                        
+
+                       <!--<option selected="true" disabled="disabled"  >Open this select menu</option>-->
+
+                       <option selected="true" disabled="disabled" value="" >Open this select menu</option>
+
+                       {% for i in all_course %}
+
+                           <option value='{{i.name}}'>{{i.name}}</option>
+
+                       {% endfor  %}
+                  </select>
+
+
+
+                  <label>SEM:</label>
+
+                  <select class="form-control" aria-label="Default select example" name="sem" id="sem1">
+
+                    
+                  </select>
+
+
+                    <label>SUBJECT TYPE:</label>
+
+                  <select class="form-control" aria-label="Default select example" name="subjecttype" required>
+                       <option selected="true" disabled="disabled" value="" >Open this select menu</option>
+                       <option value="THEORY">THEORY</option>
+                       <option value="LAB">LAB</option>
+                       <option value="PROJECT">PROJECT</option>
+
+                       {% for i in all_type %}
+                       <option value="ELECTIVE/{{i.name}}">{{i.name}}</option>
+
+                       {% endfor %}
+
+                  </select>                  
+         
+               </div>
+ 
+ 
+               <div class="form-group">
+ 
+ 
+                  <button class="btn btn-primary" type="submit">Update</button>
+ 
+ 
+               </div>
+ 
+ 
+            </form>
+ 
+ 
+         </div>
+ 
+ 
+         <div class="modal-footer">
+ 
+ 
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+ 
+ 
+         </div>
+ 
+ 
+      </div>
+ 
+ 
+   </div>
+ 
+</div>
+ 
+ 
+                    {% endfor %}
+ 
+                </tbody>
+                </table>
+ 
+            </div>
+ 
+ 
+ 
+<!-- Modal Add btech Subject-->
+ 
+ 
+<div id="mymodal" class="modal fade" role="dialog">
+   <div class="modal-dialog">
+      <div class="modal-content">
+         <div class="modal-header">
+ 
+            <h4 class="modal-title">Add Subjects</h4>
+
+         </div>
+         <div class="modal-body">
+ 
+            <form action="{{url_for('subjectadd')}}" method="POST">
+ 
+ 
+               <div class="form-group">
+
+                <label>Faculty Dept:</label>
+
+                <select class="form-control" aria-label="Default select example" name="dept" id="dept"  required>
+                
+                    
+                    {% for i in all_dept %}
+
+                        <option value='{{i.name}}'>{{i.name}}</option>
+
+                    {% endfor  %}
+
+                </select>
+
+                  <label>Course:</label>
+
+                  <select class="form-control" aria-label="Default select example" name="course" id="semisterlistadd" onchange="addsemister()" required>
+                        
+
+                           <option selected="true" disabled="disabled" value="" >Open this select menu</option>
+
+                            {% for i in all_course %}
+
+                                <option value='{{i.name}}'>{{i.name}}</option>
+
+                            {% endfor  %}
+
+                  </select>
+
+                  <label>SEM:</label>
+
+                  <select class="form-control" aria-label="Default select example" name="sem" required id="addlist">
+                       <!--<option selected="true" disabled="disabled" value="" >Open this select menu</option>-->
+
+
+                  </select>  
+
+                   <label>SUBJECT TYPE:</label>
+
+                  <select class="form-control" aria-label="Default select example" name="subjecttype" required>
+                       <option selected="true" disabled="disabled" value="" >Open this select menu</option>
+                       <option value="THEORY">THEORY</option>
+                       <option value="LAB">LAB</option>
+                       <option value="PROJECT">PROJECT</option>
+
+                       {% for i in all_type %}
+                       <option value="ELECTIVE/{{i.name}}">{{i.name}}</option>
+
+                       {% endfor %}
+
+                  </select> 
+
+                  <label>Name:</label>
+                  <input type="text" class="form-control" name="name" required="1" autocomplete="off" placeholder="Add multiple subjects seperated by ',' of this type"> 
+ 
+               </div>
+ 
+               <div class="form-group">
+ 
+ 
+                  <button class="btn btn-primary" type="submit">Add Class</button>
+ 
+ 
+               </div>
+ 
+ 
+            </form>
+ 
+ 
+         </div>
+ 
+ 
+         <div class="modal-footer">
+ 
+ 
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+ 
+ 
+         </div>
+ 
+ 
+      </div>
+ 
+ 
+   </div>
+ 
+ 
+</div>
+ 
+        </div>
+ 
+    </div>
+ 
+ 
+</div>
+<!-- update -->
+<script>
+    
+    function updatesemister()
+    {
+
+        var semupdate=document.getElementById("semisterlistupdate").value;
+
+        alert(semupdate);
+
+        console.log(semupdate);
+
+        var jsonvar1 = JSON.parse('{{ json_object | tojson | safe}}');
+
+        //alert(jsonvar1);
+
+        //var arr1=new Array("1-1","1-2","2-1","2-2","3-1","3-2","4-1","4-2","5-1","5-2","6-1","6-2");
+
+        //alert(arr1);
+        var str1="";
+        for(i1 in jsonvar1)
+        {
+            if(i1==semupdate)
+            {
+                //alert("true");
+                loop=jsonvar1[i1];
+
+                var k=1;
+                for(j=1;j<=Math.ceil(loop/2);j++) 
+                {
+                    for(k=1;k<=2;k++)
+                    {
+                        if(j==Math.ceil(loop/2) && loop%2==1)
+                        {
+                            str1+="<option>"+String(j)+"-"+String(k)+"</option>";
+                            break;
+                        }
+                        else
+                        {
+                            str1+="<option>"+String(j)+"-"+String(k)+"</option>";
+                        }
+                    }
+                    
+                }
+                break;
+            }
+        }
+        //alert(str1);
+
+        str1+="<option>"+'hai'+"-"+'hai'+"</option>";
+        alert(str1);
+        document.getElementById('sem1').innerHTML=str1;
+
+    }
+    
+
+
+    function addsemister()
+    {
+        //alert("add semister");
+
+        var sem=document.getElementById("semisterlistadd").value;
+
+         //alert(sem);
+
+         var jsonvar = JSON.parse('{{ json_object | tojson | safe}}');
+
+        //var arr=new Array("1-1","1-2","2-1","2-2","3-1","3-2","4-1","4-2","5-1","5-2","6-1","6-2");
+
+        var str1="";
+        var k=0;
+        for(i in jsonvar)
+        {
+            if(i==sem)
+            {
+                loop=jsonvar[i];
+
+                var k=1;
+                for(j=1;j<=Math.ceil(loop/2);j++) 
+                {
+                    for(k=1;k<=2;k++)
+                    {
+                        if(j==Math.ceil(loop/2) && loop%2==1)
+                        {
+                            str1+="<option>"+String(j)+"-"+String(k)+"</option>";
+                            break;
+                        }
+                        else
+                        {
+                            str1+="<option>"+String(j)+"-"+String(k)+"</option>";
+                        }
+                    }
+                    
+                }
+                break;
+            }
+        }
+        //alert('semupdate'+str);
+        //alert(str1);
+        document.getElementById('addlist').innerHTML=str1;
+
+        }
+    
+</script>
+ 
+{% endblock %}

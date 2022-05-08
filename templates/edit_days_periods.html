@@ -1,0 +1,227 @@
+
+
+{% extends 'base.html' %}
+
+
+{% block title %}
+Edit days/periods/Max_periods
+{% endblock %}
+{% block body %}
+
+<div class="container-fluid">
+
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+
+    
+<style>
+    #jumbo {
+        box-shadow: rgba(0, 0, 0, 0.05) 0px 6px 24px 0px, rgba(0, 0, 0, 0.08) 0px 0px 0px 1px;
+    }
+
+
+</style>
+
+
+<form action="/edit_days_periods">
+
+
+
+
+    <div class="jumbotron my-auto" id="jumbo">
+
+      <center>
+        <div id="spinner" style="display:none;" align="center">
+                            <img id="img-spinner" height="100%" width="15%" align="center" src="{{ url_for('static', filename='spin.gif') }}" alt="Loading"/>
+                            Please wait It will take sometime
+        </div>
+      </center>
+
+        <div class="shadow-lg p-3 mb-5 bg-white rounded">
+            <b>For example:- If you have selected 6 days and 7 periods,time table can make  total 42 periods</b>
+            <br>
+             <div class="table-responsive">
+            <table class="table" style="background-color:white">
+            <tr>
+                <td width="20%">Select No. of Days :</td>
+                <td>
+                    <select class="form-control" id="id_days" value="{{day}}">
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                            <option value="6">6</option>
+                            <option value="7">7</option>
+                    </select>
+                </td>
+                </tr>
+                <tr>
+                <td>Select No. of Periods :</td>
+                <td>
+                    <select class="form-control" id="id_periods" value="{{periods}}">
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                            <option value="6">6</option>
+                            <option value="7">7</option>
+                            <option value="8">8</option>
+                            <option value="9">9</option>
+                    </select>
+                </td>
+            </tr>
+
+            <tr>
+              <td>No. of periods in First half:</td>
+              <td>
+                  <select class="form-control" id="morning_periods" value="{{morning_periods}}">
+                          <option value="2">2</option>
+                          <option value="3">3</option>
+                          <option value="4">4</option>
+                          <option value="5">5</option>
+                          <option value="6">6</option>
+                          <option value="7">7</option>
+                          <option value="8">8</option>
+                          <option value="9">9</option>
+                  </select>
+              </td>
+            </tr>
+            </table>
+          </div>
+
+
+          <div class="table-responsive">
+            <table class="table" style="background-color:white" >
+
+            <tr>
+              <td>Professor Max periods:</td>
+              <td>
+                <input type="number" class="form-control" id="prof" min="1" placeholder="always greater than 0" value="{{prof}}">
+              </td>
+
+              <td>Associate Professor Max periods:</td>
+              <td>
+                <input type="number" class="form-control" id="assoc_prof" min="1"  placeholder="always greater than 0" value="{{assoc}}">
+              </td>
+            </tr>
+
+            <tr>
+
+                <td>Assistant Professor Max periods:</td>
+                <td>
+                  <input type="number" class="form-control" id="ass_prof" min="1" placeholder="always greater than 0" value="{{assis_c}}">
+                </td>
+
+                <td>Assistant Professor(C) Max periods:</td>
+                <td>
+                    <input type="number" class="form-control" id="ass_prof_c" min="1"  placeholder="always greater than 0" value="{{assis}}">
+                </td>
+
+              </tr>
+
+            </table>
+          </div>
+
+            <table>
+
+            <tr>
+                <td width="91%"></td>
+                <td align ="right"> <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#myModal">Reset</button></td>
+            </tr>
+            </table>
+            </div>
+            <p id="message" align="center">
+
+            </p>
+        </div>
+        <div id="myModal" class="modal fade" role="dialog">
+          <div class="modal-dialog">
+
+            <!-- Modal content-->
+            <div class="modal-content">
+                
+              <div class="modal-header" style="background-color:red;color:white;">
+                
+
+                <h4 class="modal-title"><b> <span class="glyphicon glyphicon-warning-sign"></span> Warning...</b></h4>
+              </div>
+              <div class="modal-body">
+                <p>All the data(if any) from the time table will be cleared.</p>
+              </div>
+              <div class="modal-footer">
+               <!-- <input type="checkbox" id="class_confi" name="class_confi" value="confi">
+                <label for="class_confi">Delete my class configuration</label>
+                <br>-->
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button id="delete_all" type="button" class="btn btn-default" data-dismiss="modal">Reset</button>
+
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+    </div>
+    <br>
+</form>
+</div>
+<script type="text/javascript">
+
+     $(document).bind("ajaxSend", function(){
+       $("#spinner").show();
+     }).bind("ajaxComplete", function(){
+       $("#spinner").hide();
+     });
+
+    $("#delete_all").click(function () {
+      var url ="/reset_days_periods";
+      var days = $("#id_days").val();
+      var periods = $("#id_periods").val();
+
+      var prof= $("#prof").val();
+      var assoc_prof=  $("#assoc_prof").val();
+      var assis_prof= $("#ass_prof").val();
+      var assis_prof_c= $("#ass_prof_c").val();
+
+      var morning_periods=$("#morning_periods").val()
+
+      var max_periods=Number(days)*Number(periods);
+      //alert(prof);
+    //  if ($('#class_confi').is(':checked')) {
+            //check = 1;
+       // }
+
+        if(prof>1 && prof<=max_periods && assis_prof<=max_periods && assoc_prof<=max_periods && assis_prof_c<=max_periods && assis_prof>1 && assoc_prof>1 && assis_prof_c>1)
+        {
+        data={
+          'days': days,
+          'periods': periods,
+          'proff' : prof,
+          'assoc_proff' :assoc_prof,
+          'assistent_proff':assis_prof ,
+          'assistent_proff_c' :assis_prof_c,
+          'morning_periods':morning_periods
+
+        }
+        //alert(data['proff']);
+        $.ajax({
+        url: url,
+        type: "POST",
+        data:JSON.stringify(data),
+        contentType: "application/json",
+       
+        success: function (data) {
+          $("#message").html(data.message);
+         // alert($('#message').text())
+        }
+      });
+    }
+    else
+    {
+      $("#message").html("<b>Reset unsuccessful, Maximum periods should less than days*periods or Max_periods allotment for each category should not be negitive</b>");
+    }
+
+    });
+</script>
+{% endblock %}
+
+

@@ -1,0 +1,275 @@
+
+{% if access == 'depttype' %}
+{% extends 'deptadmin.html' %}
+    
+{% else %}
+   {% extends 'base.html' %}
+{% endif %}
+
+{% block ajax %}
+<!-- this script is for classconfig.html to perform ajax operations -->
+<script
+src="https://code.jquery.com/jquery-3.2.1.min.js"
+integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+crossorigin="anonymous"></script>
+
+
+<script type="text/javascript">
+
+$(document ).ready(function() {  
+    
+    $("#id_faculty").on('change',function(){
+
+    var course= $('#id_faculty').val();
+    //alert("id_class");
+    //alert(concat);
+    data1={table:course,status:"faculty"};
+    //alert(data1['table']);
+          
+           $.ajax({
+              type: "POST",
+              url: "/classtable_get",
+              data:JSON.stringify(data1),
+              contentType: "application/json",
+              success:function(resp){
+                //alert(resp);
+                $('#myTable').html(resp.data);
+                $('#desc').html(resp.describe);
+                }
+            });
+  
+      });   
+
+      $("#id_lab").on('change',function(){
+
+        var lab= $('#id_lab').val();
+        //alert("id_class");
+        //alert(concat);
+        data1={table:lab,status:"lab"};
+        //alert(data1['table']);
+      
+       $.ajax({
+          type: "POST",
+          url: "/classtable_get",
+          data:JSON.stringify(data1),
+          contentType: "application/json",
+          success:function(resp){
+            //alert(resp);
+            $('#myTable').html(resp.data);
+            $('#desc').html(resp.describe);
+            }
+        });
+
+  });                
+    }); 
+
+    </script>
+{% endblock %}
+
+{% block title %}
+View Timetable
+{% endblock %}
+
+{% block body %}
+
+
+<div class="container-fluid">
+
+
+<!-- Optional JavaScript -->
+<!-- jQuery first, then Popper.js, then Bootstrap JS -->
+
+
+
+<style>
+#customers {
+font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
+border-collapse: collapse;
+width: 100%;
+}
+
+#myTable td, #customers th {
+border: 1px solid #ddd;
+padding: 8px;
+
+}
+
+#myTable  tr:nth-child(even){background-color: #f2f2f2;}
+
+#myTable  td:hover {background-color: #ff9966 }
+
+#myTable  th {
+padding-top: 12px;
+padding-bottom: 12px;
+text-align: center;
+background-color: #4CAF50;
+color: white;
+}
+
+.switch {
+position: relative;
+display: inline-block;
+width: 60px;
+height: 34px;
+}
+
+.switch input {
+opacity: 0;
+width: 0;
+height: 0;
+}
+
+.slider {
+position: absolute;
+cursor: pointer;
+top: 0;
+left: 0;
+right: 0;
+bottom: 0;
+background-color: #ccc;
+-webkit-transition: .4s;
+transition: .4s;
+}
+
+.slider:before {
+position: absolute;
+content: "";
+height: 26px;
+width: 26px;
+left: 4px;
+bottom: 4px;
+background-color: white;
+-webkit-transition: .4s;
+transition: .4s;
+}
+
+input:checked + .slider {
+background-color: #2196F3;
+}
+
+input:focus + .slider {
+box-shadow: 0 0 1px #2196F3;
+}
+
+input:checked + .slider:before {
+-webkit-transform: translateX(26px);
+-ms-transform: translateX(26px);
+transform: translateX(26px);
+}
+
+/* Rounded sliders */
+.slider.round {
+border-radius: 34px;
+}
+
+.slider.round:before {
+border-radius: 50%;
+}
+
+#TForm {
+max-width: 100%;
+}
+
+#jumbo {
+padding: 20px;
+width:100%;
+}
+
+
+</style>
+
+<form id="TForm" method="post" novalidate>
+
+
+<h2>Time Table - <i>Faculty/Lab</i></h2>
+
+<div class="jumbotron jumbotron-fluid" id="jumbo">
+    <div class="shadow-lg p-3 mb-5 bg-body rounded">
+       <div class="table-responsive">
+        <table class="table" style="background-color:white;">
+            <tr>
+                <td>Dept:</td>
+                <td colspan="" >
+                    <select class="form-control" id="id_dept" onchange="faculty_dept()">
+                        <option value='' disabled='disabled' selected='true'>--select dept--</option>
+                        {% for i in all_dept %}
+                        <option value= {{i.branch}} > {{i.branch}} </option>
+                        {% endfor %} 
+                    </select>
+                </td>
+                <td>Fac:</td>
+                <td>
+                    <select class="form-control" id="id_faculty">
+
+                    </select>
+                </td>
+                <td>lab:</td>
+                <td>
+                    <select class="form-control view" id="id_lab" onchange="faculty_dept()">
+                        <option value='' disabled='disabled' selected='true'>--select lab--</option>
+                        {% for i in all_lab %}
+                        <option> {{i}} </option>
+                        {% endfor %} 
+                    </select>
+                </td>
+                
+            </tr> 
+        </table>
+        </div>
+
+
+
+        <table class="table table-bordered" id="myTable" style="background-color:white;">
+            
+
+        </table>
+        </div>
+         <div class="table-responsive" id="" >
+            <table class="table table-bordered" id="desc" style="background-color:white;">
+        </table>        
+</div>
+  
+</form>
+<script>
+   
+    function faculty_dept()
+    {
+        
+        var dept=document.getElementById("id_dept").value;
+        //alert(dept);
+        var json_faculty_data= JSON.parse('{{ all_teacher | tojson | safe}}');
+      
+        
+
+        //alert(json_faculty_data);
+
+        str1="<option value='' disabled='disabled' selected='true'>Select Faculty</option>";
+
+        var len=json_faculty_data.length;
+       
+
+        for(i in json_faculty_data)
+        {
+            if(json_faculty_data[i][1]==dept)
+            {
+                str1+="<option>"+json_faculty_data[i][0]+"</option>";
+                document.getElementById('id_faculty').innerHTML=str1;
+            }
+
+        }
+        
+        //alert('faculty'+ document.getElementById("id_faculty").innerHTML);
+
+    }
+
+
+</script>
+{% endblock %}
+
+
+ 
+
+
+
+
+

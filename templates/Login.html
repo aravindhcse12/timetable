@@ -1,0 +1,121 @@
+<!doctype html>
+<!-- https://www.codeproject.com/Questions/1229268/Bootstrap-login-form-placing-it-in-the-middle-of-t -->
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+      <title>Login</title>
+        
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
+
+<style>
+.form-signin
+{
+
+    padding-top: 20px;
+    padding-right: 20px;
+    padding-bottom: 20px;
+    padding-left: 20px;
+
+    margin-top:200px;
+
+    background-color:#F5F5F5;
+    border: 1px solid rgba(0,0,0,0.1);
+}
+
+#heading
+{
+    padding-bottom: 20px;
+}
+#top
+{
+  padding-left: 25%;
+}
+</style>
+
+      
+
+</head>
+
+<body style="background-color:#eef3f5 ;">
+
+
+
+  <div class="container-fluid">
+
+    
+
+
+    <div class="Absolute-Center is-Responsive" id="top">
+
+
+      
+
+
+      <div class="col-lg-8  ">
+
+
+        {% with messages = get_flashed_messages() %}
+    
+        {% if messages %}
+
+        {% for message in messages %}
+
+        <div class="alert alert-success alert-dismissable" role="alert">
+
+            <button type="button" class="close" data-dismiss="alert" aria-label="close">
+
+                <span aria-hidden="true">x</span>
+
+            </button>
+
+
+        {{message}}
+
+
+        </div>
+
+
+        {% endfor %}
+
+        {% endif %}
+        {% endwith %}
+
+       <form  align="align-items-center" id="form" class="form-signin " method="post" action="{{url_for('login_check')}}">
+
+         <div class="d-flex justify-content-center align-items-center"  >
+          <h2  id="heading" class="form-signin-heading"> <strong >Login</strong></h2>
+        </div>
+
+          <div class="form-group">
+         <label for="email" class="sr-only">Email address</label>
+         <input type="email"  name="email" class="form-control" placeholder="Email address" required autofocus>
+         </div>
+
+         <div class="form-group">
+         <label for="password" class="sr-only">Password</label>
+         <input type="password" name="password" class="form-control" placeholder="Password" required>
+         </div>
+
+
+         <div class="form-group">
+          <label ><a href="/reset_password" style="color:rgb(14, 14, 200)">Forgot password?</a></label>
+        </div>
+
+         <button class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>
+       </form>
+
+</div>
+
+</div>
+
+</div>
+
+
+  <script src="https://code.jquery.com/jquery-3.1.1.slim.min.js" integrity="sha384-A7FZj7v+d/sdmMqp/nOQwliLvUsJfDHW+k9Omg/a/EheAdgtzNs3hpfag6Ed950n" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.min.js" integrity="sha384-DztdAPBWPRXSA/3eYEEUWrWCy7G5KFbe8fFjk5JAIxUYHKkDx6Qin1DkWx51bBrb" crossorigin="anonymous"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js" integrity="sha384-vBWWzlZJ8ea9aCX4pEW3rVHjgjt7zpkNpZk+02D9phzyeVkE+jo0ieGizqPLForn" crossorigin="anonymous"></script>
+</body>
+
+</html>

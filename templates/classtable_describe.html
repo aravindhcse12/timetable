@@ -1,0 +1,41 @@
+<table class="table table-bordered" style="background-color:white">
+
+<thead>
+<tr style="text-align: center;background-color: #4CAF50;color:white">
+    <th>class</th>
+    <th>faculty</th>
+    <th>subject</th>
+    <th>type</th>
+    <th>lab</th>
+    <th>total configured</th>
+    <th>Periods allocated </th>
+    <th>Day/Period</th>
+    <th>Period Split</th>
+    <th>Delete</th>
+</tr>
+</thead>
+<tbody>
+    {% for i in all_data %}
+    {% if i.classname == classname %}
+    <tr style="text-align:center">
+        <td>{{i.classname}}</td>
+        <td>{{i.faculty}}</td>
+        <td>{{i.subject}}</td>
+        <td>{{i.type}}</td>
+        <td>{{i.lab}}</td>
+        <td>{{i.total_periods}}</td>
+        {% if i.total_periods != i.allocated %}
+            <td style="background-color:#FF0000">{{i.allocated}}</td>
+        {% else %}
+        <td >{{i.allocated}}</td>
+        {% endif %}
+        <td>{{i.dayperiod}}</td>
+        <td>{{i.split}}</td>
+        <td>
+            <input type="checkbox" value="{{i.id}}" id="delete">
+        </td>
+    </tr> 
+    {% endif %}
+{% endfor %}
+</tbody>
+</table>

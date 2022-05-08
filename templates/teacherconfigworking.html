@@ -1,0 +1,146 @@
+{% if access == 'dept_type' %}
+    {% extends 'deptadmin.html' %}
+        
+{% else %}
+       {% extends 'base.html' %}
+{% endif %}
+
+{% block title %} Faculty Configuration {% endblock %}
+ 
+ 
+ 
+{% block body %}
+
+
+<div class="container-fluid">
+
+
+
+    <!-- Optional JavaScript -->
+
+
+    
+
+    <h2>Faculty/Subject  Configuration</h2>
+    <div class="jumbotron jumbotron-fluid" style="background-color:#1A6DC3; color:white; padding: 30px">
+
+    		<h6 style="font-size:30px" padding: 10px;>A faculty can teach multiple subjects</h6>
+    	    <h4 style="font-size:16px" padding: 10px;>Step 1: Select the faculty </h4>
+            <h4 style="font-size:16px" padding: 10px;>Step 2: Select the subject </h4>
+
+            <h4 style="font-size:16px" padding: 10px;>Step 4: Click on add.</h4>
+
+    </div>
+
+    <div class="jumbotron my-auto">
+        <div class="shadow-lg p-3 mb-5 bg-white rounded">
+            <div class="table-responsive">
+
+            <form action="{{url_for('teacherconfigadd')}}" method="POST">
+
+            <table id="teacher_subject" class="table" style="background-color:white">
+                <tr>
+                    <td>
+                        <label for="id_teacher">Teacher :</label>
+                        <input type="text" class="form-control" id="teachers" name="teachers" list="teacher-list">
+                        <datalist id="teacher-list" >
+
+                        	       {% for i in teacherlis %}
+							            <option value="{{i.name}}">{{i.name}}</option>
+							        {% endfor %}
+
+                        </datalist>
+
+					</td>
+                    
+
+                    <td>
+                        <label for="id_teacher">Subject :</label>
+                        <input type="text" class="form-control" id="subjects" name="subjects" list="subject-list">
+                        <datalist id="subject-list">
+
+                                   {% for i in sub %}
+                                        <option value="{{i.name}}">{{i.name}}</option>
+                                    {% endfor %}
+
+                        </datalist>
+                    </td>
+
+                    <td>
+                        <label for="button">Add record</label></br>
+                        <button id="add" type="submit" class="btn btn-primary">Add</button>
+                    </td>
+                </tr>
+            </table>
+        </form>
+            </div>
+
+
+
+             <div class="table-responsive">
+            <table id="load_data" class="table table-striped" style="background-color:white">
+
+                <caption id="cap"></caption>
+
+
+            <thead>
+              <tr>
+                <th style="text-align:center;">Sr. No</th>
+                <th>Teacher</th>
+                <th>Subject</th>
+                <th style="text-align:center"> <button type="button" id="proceed" class="btn btn-danger" >Delete</button></th>
+              </tr>
+            </thead>
+
+            <tbody id="teacher_list">
+                {% for i in conf %}  
+                <tr>
+               
+
+                    <td style="text-align:center">{{loop.index}}</td>
+                    <td>{{i.name}}</td>
+                    <td>{{i.subject}}</td>
+                    <td align="center">
+                        <div class="checkbox">
+                            <input type="checkbox" value="24500">
+                        </div>
+                    </td>
+                    
+                </tr>
+                {% endfor %}
+
+
+                
+                
+            </tbody>
+            </table>
+            </div>
+        </div>
+    </div>
+    <br>
+    <br>
+    <script>
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js">
+    </script>
+
+   <script>
+  $( function() {
+    var availableTags = [
+        {% for i in languages %}
+            "{{i}}",
+        {% endfor %}
+    ];
+    $( "#tags" ).autocomplete({
+      source: availableTags
+    });
+  } );
+  </script>
+
+
+</div>
+
+
+
+
+
+{% endblock %}

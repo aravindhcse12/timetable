@@ -1,0 +1,198 @@
+{% if access == 'dept_type' %}
+    {% extends 'deptadmin.html' %}
+        
+{% else %}
+       {% extends 'base.html' %}
+{% endif %}
+
+{% block title %} Class configuration {% endblock %}
+ 
+ 
+ 
+{% block body %}
+<div class="container-fluid">
+<h2>Class Configuration</h2>
+        <div class="jumbotron jumbotron-fluid" style="background-color:#1A6DC3;color:white; padding: 30px">
+
+            <h4 style="font-size:16px" padding: 10px;>Step 1: Select the class and regulation to configure.</h4>
+            <h4 style="font-size:16px" padding: 10px;>Step 2: Select the teacher and the subject(only the configured subject and respected regulation subject for that class will be shown)</h4>
+            <h4 style="font-size:16px" padding: 10px;>Step 3: Enter the number of periods for the teacher/subject <b>(for a complete week)</b></h4>
+            <h4 style="font-size:16px" padding: 10px;>Step 4: Click on add.</h4>
+
+        </div>
+
+        <form
+    load-data-url="/configure_class/load_data/"
+    load-subject-url="/configure_class/load_subjects/"
+    add-record-url="/configure_class/new_record/"
+    add-record-overlap-url="/configure_class/new_record/overlap/"
+    delete-confi-record-url="/configure_class/configure_class/delete/"
+    delete-confi-record-all-url="/configure_class/configure_class/delete_all/"
+    set-class-teacher-url="/configure_class/configure_class/set_class_teacher/"
+    id="Teacher_list_form" method="post" novalidate>
+    <input type="hidden" name="csrfmiddlewaretoken" value="njJKbfHnXXt290OjIQqJSEjt8HwdgLqcwpkApTRCHOiYNoSQx777z7OxiAk7oNpT">
+
+    <div class="jumbotron my-auto">
+        <div class="shadow-lg p-3 mb-5 bg-white rounded">
+             <div class="table-responsive">
+            <table class="table" style="background-color:white">
+                <tr>
+                    <td align ="right">
+                        Course:
+                    </td>
+                    <td>
+                        <select class="form-control" id="id_course" onchange="selectsem()">
+                            <option value="" disabled="disabled" selected="true">Select course</option>
+                            {%for i in all_course %}
+                            <option value="{{i.name}}">{{i.name}}</option>
+                            {% endfor %}
+                            
+                        </select>
+                    </td>
+
+ 
+                    <td align ="right">
+                        semister:
+                    </td>
+
+                    <td>
+                        <select class="form-control" id="id_sem">
+                            
+                        </select>
+                    </td>
+            
+                </tr>
+            </table>
+            </div>
+             <div class="table-responsive">
+            <table id="teacher_subject" class="table" style="background-color:white">
+                <tr>
+                    <td>
+                        <label for="id_teacher">Teacher :</label>
+
+                        <input type="text" class="form-control" id="id_teacher" list="teacher_list">
+
+                            <datalist id="teacher_list">
+                                {% for i in all_teacher %}
+                                <option value="{{i.name}}">{{i.name}}</option>
+                                {% endfor %}                            
+                            </datalist>
+
+                    </td>
+                    <td>
+                         <label for="id_subject">Subject :</label>
+                         <input type="text" class="form-control" id="id_subject" list="subject_list">
+
+                            <datalist id="subject_list">
+
+                                       {% for i in all_subject %}
+                                            <option value="{{i.name}}">{{i.name}}</option>
+                                        {% endfor %}
+
+                            </datalist>                            
+                    </td>
+                    <td>
+                     <label for="periods">No. of periods: (for whole week)</label>
+                    <input type="number" min="1" class="form-control" id="periods">
+                    </td>
+
+                    <td>
+                        <label for="button">Add record</label></br>
+                        <button id="add" type="button" class="btn btn-primary">Add</button>
+                    </td>
+
+                </tr>
+            </table>
+            </div>
+             <div class="table-responsive">
+            <table  class="table table-bordered" style="background-color:white" >
+                <caption id="cap"></caption>
+            <thead>
+              <tr>
+                <th style="text-align:center"  onclick="sortTable(0)">Sr. No</th>
+                <th>Teacher</th>
+                <th>Subject</th>
+                <th>Class</th>
+
+                <th>No. of Periods</th>
+                <th></th>
+                <th style="text-align:center"> <button type="button" id="proceed" class="btn btn-danger" >Delete</button></th>
+              </tr>
+            </thead>
+            <tbody  id="load_data">
+            </tbody>
+            </table>
+            <div>
+                <center> <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#myModal">Delete class/section</button></center>
+            </div>
+            <div id="myModal" class="modal fade" role="dialog">
+          <div class="modal-dialog">
+
+            <!-- Modal content-->
+            <div class="modal-content">
+              <div class="modal-header" style="background-color:red;color:white;">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title"><b> <span class="glyphicon glyphicon-warning-sign"></span> Warning...</b></h4>
+              </div>
+              <div class="modal-body">
+                 <h4 class="modal-title">This will delete all the entries of the currently selected class/section</h4>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button id="proceed2" type="button" class="btn btn-default" data-dismiss="modal">Delete</button>
+              </div>
+            </div>
+             </div>
+          </div>
+
+            </div>
+        </div>
+    </div>
+    <br/>
+</form>
+
+</div>
+<script>
+    function selectsem()
+    {
+        alert("updatesemister");
+
+        var semupdate=document.getElementById("id_course").value;
+
+        //alert(semupdate);
+
+        var jsonvar1 = JSON.parse('{{ json_object | tojson | safe}}');
+
+        //alert(jsonvar1);
+
+        var arr1=new Array("1-1","1-2","2-1","2-2","3-1","3-2","4-1","4-2","5-1","5-2","6-1","6-2","7-1","7-2","8-1","8-2");
+
+        //alert(arr1);
+        //<option value="" disabled="disabled" selected="true">Select course</option>
+
+        var str1="";
+
+        for(i1 in jsonvar1)
+        {
+            if(i1==semupdate)
+            {
+                //alert("true");
+                loop=jsonvar1[i1];
+
+                for(j=0;j<loop;j++)
+                {
+
+                    str1+="<option>"+arr1[j]+"</option>";
+                }
+                break;
+            }
+        }
+        alert(str1);
+
+        document.getElementById('id_sem').innerHTML=str1;
+
+
+
+    }
+</script>>
+{% endblock %}

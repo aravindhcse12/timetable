@@ -1,0 +1,32 @@
+<table class="table table-bordered" style="background-color:white">
+
+    <thead>
+    <tr style="text-align: center;background-color: #4CAF50;color:white">
+        <th>lab</th>        
+        <th>faculty</th>        
+        <th>class</th>
+        <th>subject</th>
+        <th>type</th>
+
+        <th>total configured</th>
+        <th>Periods allocated </th>
+        <th>Day/Period</th>
+    </tr>
+    </thead>
+    <tbody>
+        {% for i in all_data %}
+        {% if lab is in i.lab %}
+        <tr style="text-align:center">
+            <td>{{i.lab}}</td>
+            <td>{{i.faculty}}</td>
+            <td>{{i.classname}}</td>
+            <td>{{i.subject}}</td>
+            <td>{{i.type}}</td>
+            <td>{{i.total_periods}}</td>
+            <td>{{i.allocated}}</td>
+            <td>{{i.dayperiod}}</td>
+        </tr> 
+        {% endif %}
+    {% endfor %}
+    </tbody>
+    </table>

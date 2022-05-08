@@ -1,0 +1,88 @@
+<!--<table class="table table-bordered" id="myTable" style="background-color:white;">
+            
+    <thead>
+    <tr bgcolor="lightgrey">
+        <th class="col-sm-1">Class/Period</th>
+        
+        <th class="col-sm-1">I</th>
+        
+        <th class="col-sm-1">II</th>
+        
+        <th class="col-sm-1">III</th>
+        
+        <th class="col-sm-1">IV</th>
+        
+        <th class="col-sm-1">V</th>
+        
+        <th class="col-sm-1">VI</th>
+        
+        <th class="col-sm-1">VII</th>
+    
+    </tr>
+    </thead>
+    <tbody id="myTable2">
+        {% for  i in all_data %}
+        <tr height="80px">
+            
+            <td style="text-align: center;background-color: #4CAF50;color:white">{{i[0]}}</td>
+            
+            <td>{{i[1]}}</td>
+            
+            <td>{{i[2]}}</td>
+            
+            <td>{{i[3]}}</td>
+            
+            <td>{{i[4]}}</td>
+            
+            <td>{{i[5]}}</td>
+            
+            <td>{{i[6]}}</td>
+            
+            <td>{{i[7]}}</td>
+            
+        </tr>
+        {% endfor %}
+        </tbody>
+        </table> -->
+
+        <table class="table table-bordered" id="desc" style="background-color:white;">
+       
+            <thead id='thead'>
+                <tr>
+                    {% for j in range(periods+1) %}
+
+                        {% if j==0 %}
+                            <th style="text-align: center;background-color: #4CAF50;color:white">periods</th>
+                        {% else %}
+                            <th style="text-align: center;background-color: #4CAF50;color:white" >{{j}}</th>
+
+                        {% endif %}
+
+                    {% endfor %}	
+                </tr>
+            </thead>
+                
+            <tbody id="myTable2">
+
+                {% for i in all_data %}
+                <tr  height="40px">
+
+                    {% for j in range(periods+1) %}
+
+                        {% if j==0 %}
+                            <td style="text-align: center;background-color: #4CAF50;color:white">{{i[j]}}</td>
+                        {% else %}
+
+                            {% if i[j]=='--' %}
+                            <td style="background-color: #784caf;" >{{i[j]}}</td>
+                            {% else %}
+                            <td >{{i[j]}}</td>
+                            {% endif %}
+
+                        {% endif %}
+
+                    {% endfor %}	
+                </tr>
+                {% endfor %}
+            </tbody>  
+            </table>

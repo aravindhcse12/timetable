@@ -1,0 +1,1152 @@
+
+{% if access == 'dept_type' %}
+    {% extends 'deptadmin.html' %}
+        
+{% else %}
+       {% extends 'base.html' %}
+{% endif %}
+
+
+{% block ajax %}
+<!-- this script is for classconfig.html to perform ajax operations -->
+<script
+src="https://code.jquery.com/jquery-3.2.1.min.js"
+integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+crossorigin="anonymous"></script>
+
+
+<script type="text/javascript">
+     $(document).bind("ajaxSend", function(){
+       $("#spinner").show();
+     }).bind("ajaxComplete", function(){
+       $("#spinner").hide();
+     });
+
+$(document ).ready(function() {  
+
+  
+    $("#id_faculty").on('change',function(){
+
+        $("#textarea1").text(function(i,origText){
+            //alert(!$.trim($('#textarea1')).length);
+
+            if(!$.trim($('#textarea1').text())) {
+                // paragraph with id="element" is empty, your code goes here
+                return $('#id_faculty').val();
+            }
+            else
+                return  origText+","+$('#id_faculty').val(); 
+    });
+
+     //alert($("#textarea1").text());
+
+    });
+    
+
+
+    $("#id_class").on('change',function(){
+
+    var course= $('#id_class').val();
+ 
+    //alert(concat);
+    data1={table:course,status:"class"};
+
+    //alert(data1['table']);
+          
+           $.ajax({
+              type: "POST",
+              url: "/classtable_get",
+              data:JSON.stringify(data1),
+              contentType: "application/json",
+              success:function(resp){
+                //alert(resp);
+                $('#myTable').html(resp.data);
+                $('#desc').html(resp.describe);
+
+                
+                }
+            });
+  
+      });
+
+      $('#generate').click(function(){
+
+            if($('#id_class').val() != undefined )
+            {
+            val=$('#id_class').val();
+            data={ data:val };
+
+            $.ajax({
+            url: '/generate_class',
+            type: "POST",
+            data:JSON.stringify(data),
+            contentType: "application/json",
+
+            success: function(resp){
+                //alert("method passed");
+                //alert(resp.data)
+                if(resp.msg)
+                {
+                    $('#desc').html(resp.describe);
+                    $('#myTable').html(resp.data);
+                    alert(resp.msg);
+                    
+                }
+                //window.location.reload(true);
+                $('#desc').html(resp.describe);
+                $('#myTable').html(resp.data);
+            
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                alert(textStatus);}
+            });
+            }
+            else alert("select class");
+
+        });
+
+      $('#delete_all').click(function(){
+
+            if($('#id_class').val() != undefined )
+            {
+                val=$('#id_class').val();
+                data={ data:val };
+
+                $.ajax({
+                url: '/delete_all',
+                type: "POST",
+                data:JSON.stringify(data),
+                contentType: "application/json",
+
+                success: function(resp){
+                    //alert(resp.data)
+                    
+                    $('#desc').html(resp.describe);
+                    $('#myTable').html(resp.data);
+                    window.location.reload(true);
+
+                  
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                    alert(textStatus);}
+            });
+            }
+            else alert("select class");
+
+        });
+
+        $('#delete').click(function(){
+
+        //alert($('#id_class').val());
+
+        if($('#id_class').val())
+        {
+            
+                var ids = '';
+                var comma = '';
+                $("input:checkbox[id='delete']:checked").each(function() {
+                    ids = ids + comma + this.value;
+                    comma = ',';			
+
+                });
+           
+                if(ids!='')
+                {
+                        if($('#id_period_to').val()  && $('#id_period_from').val() && $('#id_day').val() )
+                        {
+                            var val=$('#id_class').val();
+                            data={ 
+
+                                class:$('#id_class').val() ,
+                                to:$('#id_period_to').val(),
+                                from:$('#id_period_from').val(),
+                                day:$('#id_day').val(),
+                                status:"day_period",
+                                ids:ids
+                            };
+
+                            $.ajax({
+                            url: '/delete',
+                            type: "POST",
+                            data:JSON.stringify(data),
+                            contentType: "application/json",
+
+                            success: function(resp){
+                                if(resp.day){ alert(resp.day);}
+                                //window.location.reload(true);
+                                $('#desc').html(resp.describe);
+                                $('#myTable').html(resp.data);
+
+                                if(resp.msg){alert(resp.msg);}
+        
+    
+                            },
+                            error: function(jqXHR, textStatus, errorThrown) {
+                                alert(textStatus);}
+                            });
+                                
+                        }
+                        else
+                        {
+
+                            let procceed = confirm("Some options still unfilled among following 'From day'/'period'/'To day'\nDo you wish to continue the checked subjects will get deleted");
+
+
+                            if (procceed) {
+                                var val=$('#id_class').val();
+                            data={ 
+
+                                class:$('#id_class').val(),
+                                
+                                status:"only_id",
+                                ids:ids
+                            };
+
+                            $.ajax({
+                            url: '/delete',
+                            type: "POST",
+                            data:JSON.stringify(data),
+                            contentType: "application/json",
+
+                            success: function(resp){
+                                if(resp.day){ alert(resp.day);}
+                                //window.location.reload(true);
+                                $('#desc').html(resp.describe);
+                                $('#myTable').html(resp.data);
+        
+    
+                            },
+                            error: function(jqXHR, textStatus, errorThrown) {
+                                alert(textStatus);}
+                            });
+                            }
+                        }
+
+                    
+                       
+
+                }
+                else//id are present
+                {
+                    alert('please select any checkbox to delete opertion');
+                }
+
+            
+        }
+        else 
+        {
+            alert(" please select all the following options:class");
+        }
+        });
+
+        
+
+    $('#get_excel').click(function(){
+
+        alert("excel button");
+
+
+        $.ajax({
+            url: '/excel_report',
+            type: "POST",
+            //data:JSON.stringify(data),
+            //contentType: "application/json",
+            success: function(resp){
+                //window.location.reload(true);
+                //alert(resp.msg);
+
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                alert(textStatus);}
+            });
+    });
+
+
+
+      $('#delete_all_classes').click(function(){
+
+                        //alert("success");
+                        data={data: "dummy"
+            
+                        };
+
+                        $.ajax({
+                        url: '/delete_all_classes',
+                        type: "POST",
+                        //data:JSON.stringify(data),
+                        //contentType: "application/json",
+
+                        success: function(resp){
+                            window.location.reload(true);        
+                        },
+                        error: function(jqXHR, textStatus, errorThrown) {
+                            alert(textStatus);}
+                     });
+
+
+      });
+
+
+
+    $('#add1').click(function(){
+
+        if($('#id_class').val() != undefined && $('#id_day').val() != undefined && 
+            $('#id_period_from').val() !=undefined  && $('#id_theory').val() !=undefined && $('#id_period_to').val() !=undefined) 
+        {
+
+            var json_config= JSON.parse('{{ all_classconfig | tojson | safe }}');
+
+            var list=json_config.length;
+
+                alert("success");
+
+                var text= $('#id_theory').val();
+
+                //alert(text);
+
+                const arr=text.split("--");
+               // alert(arr);
+
+                var index=arr[1];//id
+
+                //alert("index "+index);
+
+                var id=arr[0];
+
+                //alert("id"+id);
+
+                //alert("id",json_config[index][0]);
+                theory_data={
+
+                class: $('#id_class').val(),
+                faculty: json_config[index][3],
+                subject: json_config[index][1],
+                from: $('#id_period_from').val(),
+                to:$('#id_period_to').val(),
+                day: $('#id_day').val(),
+                to_allot:json_config[index][6],
+                type:json_config[index][2],
+                id:json_config[index][0]
+
+                };
+
+                //alert(theory_data);
+                $.ajax({
+                url: '/classtable_entry',
+                type: "POST",
+                data:JSON.stringify(theory_data),
+                contentType: "application/json",
+
+                success: function(resp){
+                        //alert(resp);
+                        //$('#table-responsive1').hide();
+                        //$('#mytable').load(data=resp.data);
+                        //alert(resp.data);
+                        /*$.ajax({
+                        type: "POST",
+                        url: "/classtable_get",
+                        data:JSON.stringify({table:$('#id_class').val()}),
+                        contentType: "application/json",
+                        success:function(resp){
+                            //alert(resp);*/
+                        if(resp.max){ alert(resp.max);}
+
+                        if(resp.collide){ alert(resp.collide);}
+
+                            $('#desc').html(resp.describe);
+                            $('#myTable').html(resp.data);
+
+
+
+                            if(resp.class_occupied){ alert(resp.class_occupied);}
+
+                            if(resp.fac_occupied) {alert(resp.fac_occupied);}
+
+                            if(resp.faculty_found_error) {alert(resp.faculty_found_error);}
+
+                            if(resp.day_error) {alert(resp.day_error);}
+
+                            if(resp.min_error){alert(resp.min_error);} 
+
+                            if(resp.duplicate_faclty){ alert(resp.duplicate_faclty);}
+        
+
+
+                            if(resp.day){ alert(resp.day); }
+
+                        
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+					alert(textStatus); }
+        }); 
+        
+
+        }
+        else alert("can not proceed");
+
+    }); 
+    $('#add2').click(function(){
+
+        var json_config= JSON.parse('{{ all_classconfig | tojson | safe }}');
+
+        var list=json_config.length;
+
+        if($('#id_class').val() != undefined && $('#id_day').val() != undefined && 
+            $('#id_period_from').val() !=undefined  && $('#id_lab').val() !=undefined && $('#id_period_to').val() !=undefined && $('#textarea1').text() !=undefined) 
+        {
+                //alert("succcess");
+
+                var text= $('#id_lab').val();
+                alert(text);
+
+                const arr=text.split("--");
+
+                var index=arr[1];
+
+                //alert("index "+index);
+
+                var id=arr[0];
+
+                //alert("id"+id);
+                //alert($('#textarea1').text());
+            
+                theory_data={
+
+                    class: $('#id_class').val(),
+                    faculty:$('#textarea1').text(),
+                    subject: json_config[index][1],
+                    from: $('#id_period_from').val(),
+                    to:$('#id_period_to').val(),
+                    day: $('#id_day').val(),
+                    to_allot:json_config[index][6],
+                    type:json_config[index][2],
+                    id:json_config[index][0],
+                    lab:json_config[index][5]
+                    };
+                    //alert(theory_data);
+                    $.ajax({
+                    url: '/classtable_entry',
+                    type: "POST",
+                    data:JSON.stringify(theory_data),
+                    contentType: "application/json",
+
+                    success: function(resp){
+
+                            if(resp.collide){ alert(resp.collide); }
+
+                            if(resp.class_occupied){ alert(resp.class_occupied);}
+
+                            if(resp.fac_occupied) {alert(resp.fac_occupied);}
+
+                            if(resp.faculty_found_error) {alert(resp.faculty_found_error);}
+
+                            if(resp.day_error) {alert(resp.day_error);}
+
+                            if(resp.min_error){alert(resp.min_error);} 
+
+                            if(resp.duplicate_faclty){ alert(resp.duplicate_faclty);}
+        
+                            if(resp.max){ alert(resp.max);}
+
+                            if(resp.day){ alert(resp.day); }
+
+                                $('#desc').html(resp.describe);
+                                $('#myTable').html(resp.data);
+                                $("#textarea1").text("");
+       
+                                },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        alert(textStatus); 
+                    }
+                    });
+
+
+        }
+        else
+        {
+            alert("ensure give all options");
+        }
+                            
+        });//add2
+
+        $('#add3').click(function(){
+
+        var json_config= JSON.parse('{{ all_classconfig | tojson | safe }}');
+
+        var list=json_config.length;
+
+        if($('#id_class').val() != undefined && $('#id_day').val() != undefined && 
+            $('#id_period_from').val() !=undefined  && $('#id_period_to').val() !=undefined && $('#textarea1').text() !=undefined) 
+        {
+                //alert("add3");
+
+                var text= $('#id_spl').val();
+                alert(text);
+                const arr=text.split("--");
+
+
+                var index=arr[1];
+
+                //alert("index "+index);
+
+                var id=arr[0];
+
+                //alert("id"+id);
+                //alert(arr);
+            
+                theory_data={
+
+                    class: $('#id_class').val(),
+                    faculty:$('#textarea1').text(),
+                    subject: json_config[index][1],
+                    from: $('#id_period_from').val(),
+                    to:$('#id_period_to').val(),
+                    day: $('#id_day').val(),
+                    to_allot:json_config[index][6],
+                    type:json_config[index][2],
+                    id:json_config[index][0],
+                    lab:json_config[index][5]
+                    };
+                    //alert(theory_data);
+                    $.ajax({
+                    url: '/classtable_entry',
+                    type: "POST",
+                    data:JSON.stringify(theory_data),
+                    contentType: "application/json",
+
+                    success: function(resp){
+        
+                                if(resp.max){ alert(resp.max);}
+
+                                if(resp.collide){ alert(resp.collide); }
+
+                                if(resp.class_occupied){ alert(resp.class_occupied);}
+
+                                if(resp.fac_occupied) {alert(resp.fac_occupied);}
+
+                                if(resp.faculty_found_error) {alert(resp.faculty_found_error);}
+
+                                if(resp.day_error) {alert(resp.day_error);}
+
+                                if(resp.min_error){alert(resp.min_error);} 
+
+                                if(resp.duplicate_faclty){ alert(resp.duplicate_faclty);}
+
+                                if(resp.day){ alert(resp.day); }
+
+                                $('#desc').html(resp.describe);
+                                $('#myTable').html(resp.data);
+                                $("#textarea1").text("");
+       
+                                },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        alert(textStatus); 
+                    }
+                    });
+
+
+        }
+        else
+        {
+            alert("ensure give all options");
+        }
+                            
+        });//add3
+
+    
+    });//start
+                            
+                
+    </script>
+{% endblock %}
+
+{% block title %}
+Class-Wise Timetable
+{% endblock %}
+
+{% block body %}
+
+
+<div class="container-fluid">
+
+
+<!-- Optional JavaScript -->
+<!-- jQuery first, then Popper.js, then Bootstrap JS -->
+
+
+
+<style>
+#customers {
+font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
+border-collapse: collapse;
+width: 100%;
+}
+
+#myTable td, #customers th {
+border: 1px solid #ddd;
+padding: 8px;
+
+}
+
+#myTable  tr:nth-child(even){background-color: #f2f2f2;}
+
+#myTable  td:hover {background-color: #ff9966 }
+
+#myTable  th {
+padding-top: 12px;
+padding-bottom: 12px;
+text-align: center;
+background-color: #4CAF50;
+color: white;
+}
+
+.switch {
+position: relative;
+display: inline-block;
+width: 60px;
+height: 34px;
+}
+
+.switch input {
+opacity: 0;
+width: 0;
+height: 0;
+}
+
+.slider {
+position: absolute;
+cursor: pointer;
+top: 0;
+left: 0;
+right: 0;
+bottom: 0;
+background-color: #ccc;
+-webkit-transition: .4s;
+transition: .4s;
+}
+
+.slider:before {
+position: absolute;
+content: "";
+height: 26px;
+width: 26px;
+left: 4px;
+bottom: 4px;
+background-color: white;
+-webkit-transition: .4s;
+transition: .4s;
+}
+
+input:checked + .slider {
+background-color: #2196F3;
+}
+
+input:focus + .slider {
+box-shadow: 0 0 1px #2196F3;
+}
+
+input:checked + .slider:before {
+-webkit-transform: translateX(26px);
+-ms-transform: translateX(26px);
+transform: translateX(26px);
+}
+
+/* Rounded sliders */
+.slider.round {
+border-radius: 34px;
+}
+
+.slider.round:before {
+border-radius: 50%;
+}
+
+#TForm {
+max-width: 100%;
+}
+
+#jumbo {
+padding: 20px;
+width:100%;
+}
+
+
+</style>
+<script>
+$(document).ready(function(){
+$("p").hide();
+$("#help").click(function(){
+$("p").toggle();
+});
+});
+</script>
+<form id="TForm" method="post" novalidate>
+
+
+<h2>Time Table - <i>Class-wise</i></h2>
+
+{% with messages = get_flashed_messages() %}
+ 
+{% if messages %}
+
+{% for message in messages %}
+
+<div class="alert alert-success alert-dismissable" role="alert">
+
+    <button type="button" class="close" data-dismiss="alert" aria-label="close">
+
+        <span aria-hidden="true">x</span>
+
+    </button>
+{{message}}
+
+
+</div>
+
+
+{% endfor %}
+
+{% endif %}
+{% endwith %}
+
+
+<div class="jumbotron jumbotron-fluid" 
+style="background-color:#1A6DC3;color:black;">
+<div class="jumbotron" style="margin:30px">
+<button id="help" type="button" class="btn btn-info">Help</button>
+    <br><br>
+
+    <p style="font-size:16px">Select Class </p>
+    <p style="font-size:16px">The class configuration will get loaded in the dropdown</p>
+
+
+    <p style="font-size:16px"><b><u>Export to Excel Button</u></b></p>
+
+    <p class="text-justify" style="font-size:16px">Export to Excel button when clicked will generate an excel file (for all classes). Please wait till the file get generated.</p>
+    
+   
+    
+    <p style="font-size:16px"><b><u>Auto Generate Button</u></b></p>
+    <p class="text-justify" style="font-size:16px">Click on Auto Generate button to automatically generate the time table for the currently selected class
+    You can manually allocate some periods to teachers and can generate rest of the time table by Auto Generate.
+    Please wait till the processing gets over.</p>
+
+
+
+     <p style="font-size:16px"><b><u>Add Button</u></b></p>
+     <p class="text-justify" style="font-size:16px">Select the period from the dropdown to fill the periods with selected configuration and click on Add button.
+      The selected period will be allocated with the selected class configration(if available/free). </p>
+
+
+    <p style="font-size:16px"><b><u>Delete Button</u></b></p>
+    <p class="text-justify" style="font-size:16px">
+        Delete button will delete the selected configuration/period/day. 
+    </p>
+    <p style="font-size:16px"><b><u>Delete All Button</u></b></p>
+    <p style="font-size:16px">
+       Delete All button will delete all the entries for the selected class
+    </p>
+    
+</div>
+</div>
+<div class="jumbotron jumbotron-fluid" id="jumbo" >
+
+    <div class="shadow-lg p-3 mb-5 bg-body rounded" style="background-color:white;">
+
+       <div class="table-responsive">
+        <table class="table" style="background-color:white;">
+            <tr>
+                <td>
+                    Class
+                </td>
+                <td>
+
+                    {% if access == 'dept_type' %}
+                    <select class="form-control" id="id_class" onchange="subjects()">
+                        <option value='' disabled='disabled' selected='true'>Select class</option>
+                        {% for i in all_class %}
+                        <option value="{{ i }}">
+                            {{ i }}
+                        </option>
+                        {% endfor %}
+                    </select>  
+                            
+                    {% else %}
+                    <select class="form-control" id="id_class" onchange="subjects()">
+                        <option value='' disabled='disabled' selected='true'>Select class</option>
+                        {% for i in all_class %}
+                        <option value="{{ i.classname }}">
+                            {{ i.classname }}
+                        </option>
+                        {% endfor %}
+                    </select> 
+
+                        
+                    {% endif %}
+
+
+                </td>
+                
+               
+  
+                <td><button id = "btn_tt" type="button" class="btn btn-link"></button></td>
+                
+                <td><button id="get_excel" type="button" class="btn btn-primary">Export to Excel
+                </button></td>
+
+               <!-- <td><a class="btn btn-primary" href="/time_tables/time_table_list/pdf/">Print
+                </a></td>
+                <td><a class="btn btn-primary" href="/time_tables/time_table_list/pdf/all/">Print All
+                </a></td>-->
+                <td ><button id="generate" type="button" class="btn btn-primary">
+                    Auto Generate
+                </button></td>
+                <!--
+                 <td ><button type="button" class="btn btn-primary" data-toggle="modal" data-target="#generateall">
+                    Auto Generate All
+                </button></td>-->
+                <td>
+                    <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#myModal">Delete All</button>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                Prds From
+                </td>
+                <td >
+
+                    <select class="form-control" id="id_period_from">
+
+                        <option value='' disabled='disabled' selected='true'>Select Period</option>
+                        
+                        {% for i in range(1,periods+1) %}
+                            <option value="{{i}}">{{i}}</option>
+                        {% endfor %}
+           
+                    </select>
+                </td>
+                <td>
+                    Prds to
+                    </td>
+                    <td >
+    
+                        <select class="form-control" id="id_period_to">
+                            <option value='' disabled='disabled' selected='true'>Select Period</option>
+                            
+                            {% for i in range(1,periods+1) %}
+                                <option value="{{i}}">{{i}}</option>
+                            {% endfor %}
+               
+                        </select>
+                    </td>
+
+                <td>
+
+                    <select class="form-control" id="id_day" >
+                        <option value='' disabled='disabled' selected='true'>Select Day</option>
+
+                        {% for i in day_list %}
+                                <option value="{{i}}">{{i}}</option>
+
+                        {% endfor %}
+
+                        
+
+                    </select>
+                </td>
+                <td colspan="2">
+                    <select class="form-control" id="id_theory">
+
+                    </select>
+                </td>
+                <td >
+                    <button id="add1" type="button" class="btn btn-primary">Add</button>
+                </td>
+
+                <td >
+                    <button id="delete" type="button" class="btn btn-danger">Delete</button>
+                </td>
+
+                <td >
+
+                </td>
+            </tr>
+            <tr>
+                <td>Dept:</td>
+                <td colspan="" >
+                    <select class="form-control" id="id_dept" onchange="faculty_dept()">
+                        <option value='' disabled='disabled' selected='true'>--select dept--</option>
+                        {% for i in all_dept %}
+                        <option value= {{i.branch}} > {{i.branch}} </option>
+                        {% endfor %} 
+                    </select>
+                </td>
+                <td>Fac:</td>
+                <td>
+                    <select class="form-control" id="id_faculty">
+
+                    </select>
+                </td>
+                <td>
+                <div class="form-outline">
+                    <textarea height="auto" type="text" class="form-control" id="textarea1" rows="2"  style="display:block;" readonly></textarea>
+                    
+                  </div>
+                </td>
+
+                <td>Sub:</td>
+                <td colspan="">
+                    
+                    <select class="form-control" id="id_lab">
+
+                    </select>
+                </td>
+
+               
+                <td>
+                    <button id="add2" type="button" class="btn btn-primary">Add</button>
+                </td>
+ 
+                    
+
+                <td>
+                    <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#myModal2">Delete all Classes</button>
+                </td>
+                <td >
+
+                </td>
+
+            </tr>
+            <tr>
+                <td colspan="5">
+                </td>
+               
+                <td>Spl:</td>
+                <td colspan="">
+                    <select class="form-control" id="id_spl" style="float:left">
+
+                    </select>
+                </td>
+
+                <td>
+                    <button id="add3" type="button" class="btn btn-primary">Add</button>
+                </td>
+
+            </tr>
+            
+        </table>
+
+        <center>
+            <div id="spinner" style="display:none;" align="center">
+                                <img id="img-spinner" height="100%" width="15%" align="center" src="{{ url_for('static', filename='spin.gif') }}" alt="Loading"/>
+                                Please wait It will take sometime
+            </div>
+        </center>
+        </div>
+
+        <div class="table-responsive">
+
+
+
+        <table class="table table-bordered" id="myTable" style="background-color:white;">
+       
+
+        </table>
+        </div>
+        <div class="table-responsive" id="" >
+            <table class="table table-bordered" id="desc" style="background-color:white;">
+        </table>   
+
+        <!-- Modal -->
+        <div id="myModal" class="modal fade" role="dialog">
+      <div class="modal-dialog">
+
+        <!-- Modal content-->
+        <div class="modal-content">
+          <div class="modal-header" style="background-color:red;color:white;">
+  
+            <h4 class="modal-title"><b> <span class="glyphicon glyphicon-warning-sign"></span> Warning...</b></h4>
+          </div>
+          <div class="modal-body">
+             <h4 class="modal-title">This will delete all the entries of the currently selected class/section</h4>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            <button id="delete_all" type="button" class="btn btn-default" data-dismiss="modal">Delete All</button>
+          </div>
+        </div>
+         </div>
+      </div>
+
+
+         <div id="myModal2" class="modal fade" role="dialog">
+      <div class="modal-dialog">
+
+        <!-- Modal content-->
+        <div class="modal-content">
+          <div class="modal-header" style="background-color:red;color:white;">
+            
+            <h4 class="modal-title"><b> <span class="glyphicon glyphicon-warning-sign"></span> Warning...</b></h4>
+          </div>
+          <div class="modal-body">
+             <h4 class="modal-title">This will delete all the classes</h4>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            <button id="delete_all_classes" type="button" class="btn btn-default" data-dismiss="modal">Delete all Classes</button>
+          </div>
+        </div>
+         </div>
+      </div>
+
+
+
+        <div id="generateall" class="modal fade" role="dialog">
+      <div class="modal-dialog">
+
+        <!-- Modal content-->
+        <div class="modal-content">
+          <div class="modal-header" style="background-color:green;color:white;">
+            <button type="button" class="close" data-dismiss="modal">&times;</button>
+            <h4 class="modal-title">Info</h4>
+          </div>
+          <div class="modal-body">
+            <h4 class="modal-title">They may take some time. Please wait till processing completes</h4>
+          </div>
+          <div class="modal-footer">
+             <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            <button id="generateallclasses" type="button" class="btn btn-default" data-dismiss="modal">Generate All Classes</button>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+    </div>
+    </div>
+</div>
+<br/>
+</form>
+</div>
+
+</div>
+<script>
+
+//all_config 
+function subjects()
+{
+
+
+    var course_selected=document.getElementById("id_class").value;
+
+    //alert(course_selected)
+    //alert(sem_selected+' '+course_selected);
+
+    var json_config= JSON.parse('{{ all_classconfig | tojson | safe }}');
+
+    var list=json_config.length;
+
+    //alert(json_config);
+    var i=0;
+
+    var op= "<option value='' disabled='disabled' selected='true'>Select subject</option>";
+    let str1=op;
+    let str2=op;
+    let str3=op;
+    let str4=op;
+    //alert(json_config);
+    //alert(list)
+    var i=0;
+    let table_name=""
+
+    for(i=0;i<list;i++)
+    {
+
+        table_name=String(json_config[i][3])
+        //alert(json_config[i][2]);
+        if(json_config[i][4]==course_selected)
+        {
+            
+            
+            if(json_config[i][2]=="THEORY" || json_config[i][2].slice(0,8)=="ELECTIVE")
+            {
+                str1+="<option value="+json_config[i][0]+"--"+i+">"+ json_config[i][1]+"--"+json_config[i][6]+"--"+json_config[i][3]+"--"+json_config[i][2]+"</option>";              
+
+
+                document.getElementById("id_theory").innerHTML=str1;
+
+            }
+
+            else if(json_config[i][2]=="LAB")
+            {
+                str2+="<option value="+json_config[i][0]+"--"+i+">"+ json_config[i][1]+"--"+json_config[i][6]+"</option>";
+                document.getElementById("id_lab").innerHTML=str2;
+                //alert(str2);
+            }
+            else if(json_config[i][2]=="PROJECT")
+            {
+
+                str3+="<option value="+json_config[i][0]+"--"+i+">"+ json_config[i][1]+"--"+json_config[i][6]+"--"+json_config[i][3]+"--"+json_config[i][2]+"</option>";
+                document.getElementById("id_spl").innerHTML=str3;
+                //alert(str3);
+
+            }
+            else break;
+           
+        }
+        else
+        {
+            //alert("no subject under this course");
+        
+            document.getElementById("id_lab").innerHTML=str2;
+            document.getElementById("id_theory").innerHTML=str1;
+            document.getElementById("id_spl").innerHTML=str3;
+        }
+      
+        //alert(document.getElementById("id_theory").innerHTML);
+
+ 
+        
+    } //for
+    //alert(document.getElementById("id_lab").innerHTML);
+}
+    function faculty_dept()
+    {
+        
+        var dept=document.getElementById("id_dept").value;
+        //alert(dept);
+        var json_faculty_data= JSON.parse('{{ all_teacher | tojson | safe}}');
+      
+        
+
+        //alert(json_faculty_data);
+
+        str1="<option value='' disabled='disabled' selected='true'>Select Faculty</option>";
+
+        var len=json_faculty_data.length;
+       
+
+        for(i in json_faculty_data)
+        {
+            if(json_faculty_data[i][1]==dept)
+            {
+                str1+="<option>"+json_faculty_data[i][0]+"</option>";
+                document.getElementById('id_faculty').innerHTML=str1;
+            }
+
+        }
+        
+        //alert('faculty'+ document.getElementById("id_faculty").innerHTML);
+
+    }
+
+
+</script>
+{% endblock %}
+
+
+ 
+
+
+
+
+

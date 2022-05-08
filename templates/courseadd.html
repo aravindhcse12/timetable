@@ -1,0 +1,306 @@
+{% if access == 'dept_type' %}
+    {% extends 'deptadmin.html' %}
+        
+{% else %}
+       {% extends 'base.html' %}
+{% endif %}
+ 
+{% block title %} Add Course {% endblock %}
+ 
+{% block ajax %}
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script type="text/javascript">
+
+$(document).ready(function(){
+   $("#myInput").on("keyup", function() {
+      var value = $(this).val().toLowerCase();
+
+      $("#myTable tbody tr").filter(function() {
+         $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+      });
+   });
+
+});
+</script>
+{% endblock %}
+ 
+{% block body %}
+ 
+<div class="container-fluid">
+    <div class="row">
+        <div class="col md-12">
+ 
+            <div class="jumbotron p-3">
+
+               {% if access != 'dept_type' %}
+                 
+               <h2>Manage <b>Course</b>  <button type="button"  class="btn btn-success float-right"
+                  data-toggle="modal" data-target="#mymodal">Add New Course</button> </h2>
+               {% else %}
+
+                     <h2>View Courses</h2>
+               {% endif %}
+ 
+               
+ 
+ 
+                {% with messages = get_flashed_messages() %}
+ 
+                {% if messages %}
+ 
+                {% for message in messages %}
+
+ 
+                <div class="alert alert-success alert-dismissable" role="alert">
+ 
+                    <button type="button" class="close" data-dismiss="alert" aria-label="close">
+ 
+                        <span aria-hidden="true">x</span>
+ 
+                    </button>
+ 
+ 
+                {{message}}
+ 
+ 
+                </div>
+ 
+ 
+                {% endfor %}
+ 
+                {% endif %}
+                {% endwith %}
+                <input type="text" class="form-control" id="myInput"/>
+
+                <br>
+ 
+ 
+                <table class="table table-hover table-striped"  id="myTable">
+                  <thead id="thead">
+ 
+                    <tr class="table-primary">
+ 
+                        <th>ID</th>
+                        <th>Course-Reg-branch</th>
+                        <th>No of semisters</th>
+                        <th>Dept</th>
+
+                        {% if access != 'dept_type' %}
+                 
+                        <th>Action</th>
+
+                        {% endif %}
+                       
+ 
+                    </tr>
+                   </thead> 
+
+                   <tbody id="#tbody">
+ 
+ 
+                   {% for row in courses %}
+                    <tr>
+                        <td>{{loop.index}}</td>
+                        <td>{{row.name}}</td>
+                        <td>{{row.semisters}}
+                        <td>{{row.dept}}
+
+                        {% if access != 'dept_type' %}
+                        <td>
+                       <!-- <a href="/updateclass/{{row.id}}" class="btn btn-warning btn-xs" data-toggle="modal" data-target="#modaledit{{row.id}}">Edit</a>-->
+                        <a href="/deletecourse/{{row.id}}/{{row.name}}" class="btn btn-danger btn-xs">Delete</a>
+                       
+                        </td>
+                        {% endif %}
+ 
+                    </tr>
+                    </tbody>
+ 
+ 
+<!-- Modal Edit/upadate class-->
+
+<div id="modaledit{{row.id}}" class="modal fade" role="dialog">
+   <div class="modal-dialog">
+ 
+      <div class="modal-content">
+ 
+ 
+         <div class="modal-header">
+ 
+ 
+            <h4 class="modal-title">Update Information</h4>
+ 
+ 
+         </div>
+ 
+ 
+         <div class="modal-body">
+ 
+ 
+            <form action="/updatecourse/{{row.name}}" method="POST">
+ 
+ 
+               <div class="form-group">
+ 
+ 
+                  <label>Course-Reg-branch:</label>
+                   <input type="hidden"  name="id" value="{{row.id}}">
+ 
+                  <input type="text" class="form-control" name="course" value="{{row.name}}">
+ 
+                  <label>No of semisters</label>
+                  <input type="number" class="form-control" name="semisters" value="{{row.semisters}}">
+
+                  <label>Dept</label>
+
+                  <select class="form-control" name="dept">
+                     <option value='' disabled='disabled' selected='true'>Select Dept</option>
+                     {% for i in all_dept %}
+                     <option value="{{ i.name}}">
+                         {{ i.name}}
+                     </option>
+                     {% endfor %}
+                 </select>
+
+
+                  
+               </div>
+ 
+ 
+               <div class="form-group">
+ 
+ 
+                  <button class="btn btn-primary" type="submit">Update</button>
+ 
+ 
+               </div>
+ 
+ 
+            </form>
+ 
+ 
+         </div>
+ 
+ 
+         <div class="modal-footer">
+ 
+ 
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+ 
+ 
+         </div>
+ 
+ 
+      </div>
+ 
+ 
+   </div>
+ 
+</div>
+ 
+ 
+                    {% endfor %}
+ 
+ 
+                </table>
+ 
+ 
+            </div>
+ 
+ 
+ 
+<!-- Modal Add Employee-->
+ 
+ 
+<div id="mymodal" class="modal fade" role="dialog">
+   <div class="modal-dialog">
+      <div class="modal-content">
+         <div class="modal-header">
+ 
+            <h4 class="modal-title">Add Course</h4>
+
+         </div>
+         <div class="modal-body">
+ 
+            <form action="{{url_for('insertcourse')}}" method="POST">
+ 
+ 
+               <div class="form-group">
+ 
+                  <label>Course-Reg-Branch:</label>
+                  <input type="text" class="form-control" name="course" required="1">
+ 
+ 
+               </div>
+
+               <div class="form-group">
+ 
+                  <label>Dept:</label>
+   
+
+                  <select class="form-control" name="dept">
+                     <option  disabled='disabled' selected='true'>Select Dept</option>
+                     {% for i in all_dept %}
+                     <option value="{{ i.name}}">
+                         {{ i.name}}
+                     </option>
+                     {% endfor %}
+                 </select> 
+ 
+               </div>
+
+               <div class="form-group">
+ 
+                  <label>no of semisters:</label>
+                  <input type="number" class="form-control" name="semisters" required="1" minimum=1>
+ 
+ 
+               </div>
+ 
+ 
+               <div class="form-group">
+ 
+ 
+                  <button class="btn btn-primary" type="submit">Add Course</button>
+ 
+ 
+               </div>
+ 
+ 
+            </form>
+ 
+ 
+         </div>
+ 
+ 
+         <div class="modal-footer">
+ 
+ 
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+ 
+ 
+         </div>
+ 
+ 
+      </div>
+ 
+ 
+   </div>
+ 
+ 
+</div>
+ 
+ 
+ 
+ 
+ 
+        </div>
+ 
+    </div>
+ 
+ 
+</div>
+ 
+ 
+{% endblock %}

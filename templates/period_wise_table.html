@@ -1,0 +1,91 @@
+<!--<table class="table table-bordered" id="myTable" style="background-color:white;">
+            
+    <thead>
+    <tr bgcolor="lightgrey">
+        <th class="col-sm-1">Class/Day</th>
+        
+        <th class="col-sm-1">Mon</th>
+        
+        <th class="col-sm-1">Thu</th>
+        
+        <th class="col-sm-1">Wed</th>
+        
+        <th class="col-sm-1">Thu</th>
+        
+        <th class="col-sm-1">Fri</th>
+        
+        <th class="col-sm-1">Sat</th>
+    
+    </tr>
+    </thead>
+    <tbody id="myTable2">
+        {% for  i in all_data %}
+        <tr height="80px">
+            
+            <td style="text-align: center;background-color: #4CAF50;color:white">{{i[0]}}</td>
+            
+            <td>{{i[1]}}</td>
+            
+            <td>{{i[2]}}</td>
+            
+            <td>{{i[3]}}</td>
+            
+            <td>{{i[4]}}</td>
+            
+            <td>{{i[5]}}</td>
+            
+            <td>{{i[6]}}</td>
+            
+        </tr>
+        {% endfor %}
+        </tbody>
+        </table>-->
+
+        <table class="table table-bordered" id="myTable" style="background-color:white;">
+       
+            <thaed>
+                <tr>
+                   {% for j in range(length+1) %}
+
+                   {% if j==0 %}
+                    <th style="text-align: center;background-color: #4CAF50;color:white">Classes/Days</th>
+                    {% else %}
+                    <th style="text-align: center;background-color: #4CAF50;color:white" >{{day_list[j-1]}}</th>
+
+                    {% endif %}
+
+                   {% endfor %}
+                
+                </tr>
+            </thead>
+
+            <tbody id="myTable2">
+            {% for i in all_data %}
+                
+                        <tr  height="80px">
+        
+                            {% for j in range(length+1) %}
+        
+                                {% if j==0 %}
+                                    <td style="text-align: center;background-color: #4CAF50;color:white">{{i[j]}}</td>
+                                {% else %}
+                                    <td >{{i[j]}}</td>
+                                {% endif%}
+        
+        
+                            {% endfor %}	
+                        </tr>
+            
+            
+      
+            
+        
+            {% endfor %}
+            </tbody>
+        </table>
+
+
+        
+        
+        
+          

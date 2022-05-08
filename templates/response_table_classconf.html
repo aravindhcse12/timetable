@@ -1,0 +1,23 @@
+
+            {% set count=[0] %}
+            {% for i in all_data %}
+            {% if i.classname == table %}
+            <tr style="text-align:center">
+                {% if count.append(count.pop() + 1) %}{% endif %}
+                <td>{{count[-1]}}</td>
+                <td>{{i.subject}}</td>
+                <td>{{i.type}}</td>
+                <td>{{i.faculty}}</td>
+                <td>{{i.classname}}</td>
+                <td>{{i.lab}}</td>
+                <td>{{i.total_periods}}</td>
+                <td>{{i.f_count}}</td>
+                <td>{{i.split}}</td>
+                <td><input type="checkbox"  name="row-check" value="{{i.id}}"></td>
+            {% endif %}
+            </tr> 
+        
+            {% endfor %}
+
+
+

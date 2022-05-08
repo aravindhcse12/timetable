@@ -1,0 +1,362 @@
+{% if access == 'dept_type' %}
+    {% extends 'deptadmin.html' %}
+        
+{% else %}
+       {% extends 'base.html' %}
+{% endif %}
+
+{% block title %} Add Faculty {% endblock %}
+
+{% block ajax %}
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script type="text/javascript">
+
+$(document).ready(function(){
+   $("#myInput").on("keyup", function() {
+      var value = $(this).val().toLowerCase();
+
+      $("#myTable tbody tr").filter(function() {
+         $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+      });
+   });
+
+});
+</script>
+{% endblock %}
+ 
+{% block body %}
+ 
+<div class="container-fluid">
+    <div class="row">
+        <div class="col md-12">
+ 
+            <div class="jumbotron p-3">
+
+               {% if access != 'dept_type' %}
+               <td>
+                 
+                  <h2>Manage <b>Faculty</b>  <button type="button"  class="btn btn-success float-right"
+                     data-toggle="modal" data-target="#mymodal">Add New Faculty</button> </h2>
+
+               </td>
+
+               {% else %}
+
+               <td>
+                 
+                  <h2>View Faculty</h2>
+
+               </td>
+
+               {% endif %}
+ 
+                
+ 
+                <input type="text" class="form-control" id="myInput"/>
+
+                <br>
+ 
+                {% with messages = get_flashed_messages() %}
+ 
+                {% if messages %}
+ 
+                {% for message in messages %}
+ 
+                <div class="alert alert-success alert-dismissable" role="alert">
+ 
+                    <button type="button" class="close" data-dismiss="alert" aria-label="close">
+ 
+                        <span aria-hidden="true">x</span>
+ 
+                    </button>
+ 
+ 
+                {{message}}
+ 
+ 
+                </div>
+ 
+ 
+                {% endfor %}
+ 
+                {% endif %}
+                {% endwith %}
+ 
+                <table class="table table-hover table-striped" id="myTable">
+                  <thead id="thead">
+                    <tr class="table-primary">
+ 
+                        <th>SNO</th>
+                        <th>Name-ID</th>
+                        <th>BRANCH</th>
+                        <th>Designation</th>
+                        <th>Mail</th>
+                        <th>Work_load</th>
+
+                        {% if access != 'dept_type' %}
+                           <th>Exclude </th>
+                           <th>Action</th>
+
+                        {% endif %}
+
+ 
+                    </tr>
+                  
+                  </thead>
+                  <tbody id="#tbody"> 
+ 
+                   {% for row in employees %}
+                    <tr>
+                       
+                        <td>{{loop.index}}</td>
+                        <td>{{row.name}}</td> 
+                        <td>{{row.branch}}</td> 
+                        <td>{{row.role}}</td>
+                        <td>{{row.mail}}</td>
+                        
+                        <td>{{row.work_load}}</td>
+
+                        {% if access != 'dept_type' %}
+                        <td>
+                         <!-- Rounded switch -->
+                              {% if row.exclude == 1 %}
+
+                              <label class="switch">
+                                 <input type="checkbox" value="{{row.id}}" name="check" checked="true">
+                                 <span class="slider round"></span>
+                              </label>
+                              {% else %}
+
+                              <label class="switch">
+                                 <input type="checkbox" value="{{row.id}}" name="check" >
+                                 <span class="slider round"></span>
+                              </label>
+
+                              {% endif %}
+                           
+                         </label>
+                     </td>
+                        <td>
+                           
+                           <a href="/updateteacher/{{row.id}}/{{row.mail}}" class="btn btn-warning btn-xs" data-toggle="modal" data-target="#modaledit{{row.id}}{{row.mail}}">Edit</a>
+                           <a href="/deleteteacher/{{row.id}}" class="btn btn-danger btn-xs" >Delete</a>
+
+
+                        </td>
+
+                        {% endif %}
+                       
+ 
+                    </tr> 
+                  </tbody>
+ 
+
+<!-- Modal Edit teachers-->
+<div id="modaledit{{row.id}}{{row.mail}}" class="modal fade" role="dialog">
+   <div class="modal-dialog">
+ 
+ 
+      <div class="modal-content">
+ 
+ 
+         <div class="modal-header">
+ 
+ 
+            <h4 class="modal-title">Update Information</h4>
+ 
+ 
+         </div>
+ 
+ 
+         <div class="modal-body">
+ 
+ 
+            <form action="/updateteacher/{{row.name}}/{{row.mail}}" method="POST">
+ 
+ 
+               <div class="form-group">
+ 
+ 
+                  <label>Name:</label>
+                   <input type="hidden"  name="id" value="{{row.id}}">
+ 
+                  <input type="text" class="form-control" name="name" value="{{row.name}}">
+
+                  <label>BRANCH:</label>
+ 
+                  <!--<input type="text" class="form-control" name="branch" value="{{row.branch}}">-->
+
+                  <select class="form-control" aria-label="Default select example" name="branch" 
+                           value="{{row.branch}}" required>
+
+                       <option selected="true" disabled="disabled" value="" >Open this select menu</option>
+
+                       {% for i in all_dept %}
+
+                       <option value="{{i.name}}" >{{i.name}}</option>
+
+                       {% endfor %}
+
+                  </select>
+                  <label>Role:</label>
+                  <br>
+                  <select class="form-control" aria-label="Default select example" name="role" required>
+                       <option selected="true" disabled="disabled" value="" >Open this select menu</option>
+                       <option value="Professor">Professor</option>
+                       <option value="Associate Professor">Associate Professor</option>
+                       <option value="Assistant Professor">Assistant Professor</option>
+                       <option value="Assistant Professor(C)">Assistant Professor(C)</option>
+                       
+                  </select>
+
+                  <label>mail:</label>
+                   
+ 
+                  <input type="email" class="form-control" name="mail" value="{{row.mail}}">
+ 
+ 
+               </div>
+ 
+ 
+               <div class="form-group">
+ 
+ 
+                  <button class="btn btn-primary" type="submit">Update</button>
+ 
+ 
+               </div>
+ 
+ 
+            </form>
+ 
+ 
+         </div>
+ 
+ 
+         <div class="modal-footer">
+ 
+ 
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+ 
+ 
+         </div>
+ 
+ 
+      </div>
+ 
+ 
+   </div>
+ 
+</div>
+ 
+ 
+                    {% endfor %}
+
+ 
+                </table>
+ 
+ 
+            </div>
+ 
+ 
+ 
+                  <!-- Modal Add Employee-->
+ 
+ 
+<div id="mymodal" class="modal fade" role="dialog">
+   <div class="modal-dialog">
+      <div class="modal-content">
+         <div class="modal-header">
+ 
+            <h4 class="modal-title">Add Teacher</h4>
+
+         </div>
+         <div class="modal-body">
+ 
+            <form action="{{url_for('insert')}}" method="POST">
+ 
+ 
+               <div class="form-group">
+ 
+                  <label>Name:</label>
+                  <input type="text" class="form-control" name="name" required="1">
+
+                  <label>BRANCH:</label>
+                  <!--<input type="text" class="form-control" name="branch" required="1"> -->
+                  <br>
+
+                  <select class="form-control" aria-label="Default select example" name="branch" 
+                           required>
+
+                       <option selected="true" disabled="disabled" value="" >Open this select menu</option>
+
+                       {% for i in all_dept %}
+
+                       <option value="{{i.name}}" >{{i.name}}</option>
+
+                       {% endfor %}
+
+                  </select>
+
+                  <label>Role:</label>
+                  <br>
+                  <select class="form-control" aria-label="Default select example" name="role" required>
+                       <option selected="true" disabled="disabled" value="" >Open this select menu</option>
+                       <option value="Professor">Professor</option>
+                       <option value="Associate Professor">Associate Professor</option>
+                       <option value="Assistant Professor">Assistant Professor</option>
+                       <option value="Assistant Professor(C)">Assistant Professor(C)</option>
+                       
+                       
+                  </select>
+
+                  <label>mail:</label>
+                   
+ 
+                  <input type="email" class="form-control" name="mail" required>
+ 
+               </div>
+ 
+ 
+               <div class="form-group">
+ 
+ 
+                  <button class="btn btn-primary" type="submit">Add Teacher</button>
+ 
+ 
+               </div>
+ 
+ 
+            </form>
+ 
+ 
+         </div>
+ 
+ 
+         <div class="modal-footer">
+ 
+ 
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+ 
+ 
+         </div>
+ 
+ 
+      </div>
+ 
+ 
+   </div>
+ 
+ 
+</div>
+ 
+        </div>
+ 
+    </div>
+ 
+ 
+</div>
+ 
+ 
+{% endblock %}

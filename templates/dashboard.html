@@ -1,0 +1,11 @@
+
+{% if access == 'depttype' %}
+{% extends 'base.html' %}
+    
+{% else %}
+   {% extends 'deptadmin.html' %}
+{% endif %}
+
+{% block title %}
+Dashboard
+{% endblock %}

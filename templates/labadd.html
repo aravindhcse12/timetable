@@ -1,0 +1,268 @@
+{% if access == 'dept_type' %}
+    {% extends 'deptadmin.html' %}
+        
+{% else %}
+       {% extends 'base.html' %}
+{% endif %}
+
+{% block title %} Add Lab {% endblock %}
+ 
+ 
+ 
+{% block body %}
+ 
+<div class="container-fluid">
+    <div class="row">
+        <div class="col md-12">
+ 
+            <div class="jumbotron p-3">
+
+               {% if access != 'dept_type' %}
+               
+               <h2>Manage <b>Lab</b>  <button type="button"  class="btn btn-success float-right"
+                  data-toggle="modal" data-target="#mymodal">Add New Lab</button> </h2>
+            {% else %}
+            <h2>Manage Lab</h2>
+            {% endif %}                
+ 
+ 
+                {% with messages = get_flashed_messages() %}
+ 
+                {% if messages %}
+ 
+                {% for message in messages %}
+ 
+                <div class="alert alert-success alert-dismissable" role="alert">
+ 
+                    <button type="button" class="close" data-dismiss="alert" aria-label="close">
+ 
+                        <span aria-hidden="true">x</span>
+ 
+                    </button>
+ 
+ 
+                {{message}}
+ 
+ 
+                </div>
+ 
+ 
+                {% endfor %}
+ 
+                {% endif %}
+                {% endwith %}
+ 
+                <table class="table table-hover table-striped">
+ 
+                    <tr class="table-primary">
+ 
+                        <th>Sno</th>
+                        <th>Lab Name</th>
+                        <th>Dept</th>
+
+                        {% if access != 'dept_type' %}
+               
+                        <th>Action</th>
+                        {% endif %}
+                           
+ 
+                    </tr>
+                  
+                   
+ 
+                   {% for row in labs %}
+                    <tr>
+                       
+                        <td>{{loop.index}}</td>
+                        <td>{{row.name}}</td> 
+                        <td>{{row.branch}}</td>
+
+                        {% if access != 'dept_type' %}
+                        <td>
+                           <a href="/updatelab/{{row.id}}" class="btn btn-warning btn-xs" data-toggle="modal" data-target="#modaledit{{row.id}}">Edit</a>
+                           <a href="/deletelab/{{row.id}}" class="btn btn-danger btn-xs" >Delete</a>
+
+
+                       </td>                        
+               
+                        {% endif %}
+                        
+ 
+                    </tr> 
+ 
+
+<!-- Modal Edit -->
+<div id="modaledit{{row.id}}" class="modal fade" role="dialog">
+   <div class="modal-dialog">
+ 
+ 
+      <div class="modal-content">
+ 
+ 
+         <div class="modal-header">
+ 
+ 
+            <h4 class="modal-title">Update Information</h4>
+ 
+ 
+         </div>
+ 
+ 
+         <div class="modal-body">
+ 
+ 
+            <form action="\updatelab\{{row.name}}" method="POST">
+ 
+ 
+               <div class="form-group">
+ 
+ 
+                  <label>Name:</label>
+                   <input type="hidden"  name="id" value="{{row.id}}">
+ 
+                  <input type="text" class="form-control" name="name" value="{{row.name}}">
+
+                  <label>BRANCH:</label>
+ 
+                  <!--<input type="text" class="form-control" name="branch" value="{{row.branch}}">-->
+
+                  <select class="form-control" aria-label="Default select example" name="branch" 
+                           value="{{row.branch}}" required>
+                           <option selected="true" disabled="disabled" value="" >Open this select menu</option>
+                           {% for dept in all_dept %}
+
+                           <option value="{{dept.name}}">{{dept.name}}</option>
+
+                           {% endfor %}
+
+                  </select>
+ 
+ 
+               </div>
+ 
+ 
+               <div class="form-group">
+ 
+ 
+                  <button class="btn btn-primary" type="submit">Update</button>
+ 
+ 
+               </div>
+ 
+ 
+            </form>
+ 
+ 
+         </div>
+ 
+ 
+         <div class="modal-footer">
+ 
+ 
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+ 
+ 
+         </div>
+ 
+ 
+      </div>
+ 
+ 
+   </div>
+ 
+</div>
+ 
+ 
+                    {% endfor %}
+
+ 
+                </table>
+ 
+ 
+            </div>
+ 
+ 
+ 
+                  <!-- Modal Add Employee-->
+ 
+ 
+<div id="mymodal" class="modal fade" role="dialog">
+   <div class="modal-dialog">
+      <div class="modal-content">
+         <div class="modal-header">
+ 
+            <h4 class="modal-title">Add Lab</h4>
+
+         </div>
+         <div class="modal-body">
+ 
+            <form action="{{url_for('labadd')}}" method="POST">
+ 
+ 
+               <div class="form-group">
+ 
+                  <label>Name:</label>
+                  <input type="text" class="form-control" name="name" required="1">
+
+                  <label>BRANCH:</label>
+                  <!--<input type="text" class="form-control" name="branch" required="1"> -->
+                  <br>
+
+                  <select class="form-control" aria-label="Default select example" name="branch" required>
+                       <option selected="true" disabled="disabled" value="" >Open this select menu</option>
+                       {% for dept in all_dept %}
+
+                       <option value="{{dept.name}}">{{dept.name}}</option>
+
+                       {% endfor %}
+
+                  </select>
+ 
+               </div>
+ 
+ 
+               <div class="form-group">
+ 
+ 
+                  <button class="btn btn-primary" type="submit">Add Lab</button>
+ 
+ 
+               </div>
+ 
+ 
+            </form>
+ 
+ 
+         </div>
+ 
+ 
+         <div class="modal-footer">
+ 
+ 
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+ 
+ 
+         </div>
+ 
+ 
+      </div>
+ 
+ 
+   </div>
+ 
+ 
+</div>
+ 
+ 
+ 
+ 
+ 
+        </div>
+ 
+    </div>
+ 
+ 
+</div>
+ 
+ 
+{% endblock %}

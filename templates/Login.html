@@ -40,22 +40,22 @@
 
 <body style="background-color:#eef3f5 ;">
 
-
+  
 
   <div class="container-fluid">
-
+   
     
 
 
     <div class="Absolute-Center is-Responsive" id="top">
 
-
+     
       
 
 
       <div class="col-lg-8  ">
 
-
+       
         {% with messages = get_flashed_messages() %}
     
         {% if messages %}
@@ -81,6 +81,7 @@
 
         {% endif %}
         {% endwith %}
+        
 
        <form  align="align-items-center" id="form" class="form-signin " method="post" action="{{url_for('login_check')}}">
 
@@ -88,19 +89,22 @@
           <h2  id="heading" class="form-signin-heading"> <strong >Login</strong></h2>
         </div>
 
-          <div class="form-group">
+        <div class="form-group">
          <label for="email" class="sr-only">Email address</label>
-         <input type="email"  name="email" class="form-control" placeholder="Email address" required autofocus>
+         <input type="email"  name="email" class="form-control" placeholder="Email address" value="aravindhchalla@gmail.com" required autofocus>
          </div>
 
          <div class="form-group">
          <label for="password" class="sr-only">Password</label>
-         <input type="password" name="password" class="form-control" placeholder="Password" required>
+         <input type="password" name="password" class="form-control" value="Tomahawk6!" placeholder="Password" required>
          </div>
 
 
          <div class="form-group">
-          <label ><a href="/reset_password" style="color:rgb(14, 14, 200)">Forgot password?</a></label>
+          <label>
+            <a href="/reset_password" style="color:rgb(14, 14, 200)">Forgot password?</a>
+            <span style="margin-left: 90px;"><b>*Default values are pre-filled for guests. Feel free to proceed!</b></span>
+          </label>
         </div>
 
          <button class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>

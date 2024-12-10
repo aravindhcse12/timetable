@@ -382,7 +382,7 @@ $(document ).ready(function() {
         
 
         }
-        else alert("can not proceed");
+        else alert("Cannot proceed!, Make sure all relevent field are set");
 
     }); 
     $('#add2').click(function(){
@@ -397,7 +397,7 @@ $(document ).ready(function() {
                 //alert("succcess");
 
                 var text= $('#id_lab').val();
-                alert(text);
+                //alert(text);
 
                 const arr=text.split("--");
 
@@ -464,7 +464,7 @@ $(document ).ready(function() {
         }
         else
         {
-            alert("ensure give all options");
+            alert("Cannot proceed!, Make sure all relevent field are set");
         }
                             
         });//add2
@@ -548,7 +548,7 @@ $(document ).ready(function() {
         }
         else
         {
-            alert("ensure give all options");
+            alert("Cannot proceed!, Make sure all relevent field are set");
         }
                             
         });//add3
@@ -682,7 +682,7 @@ $("p").toggle();
 <form id="TForm" method="post" novalidate>
 
 
-<h2>Time Table - <i>Class-wise</i></h2>
+<h2>Timetable - Class-wise</h2>
 
 {% with messages = get_flashed_messages() %}
  
@@ -710,7 +710,7 @@ $("p").toggle();
 
 
 <div class="jumbotron jumbotron-fluid" 
-style="background-color:#1A6DC3;color:black;">
+style="background-color:#1A6DC3;color:black; height:fit-content">
 <div class="jumbotron" style="margin:30px">
 <button id="help" type="button" class="btn btn-info">Help</button>
     <br><br>
@@ -748,6 +748,7 @@ style="background-color:#1A6DC3;color:black;">
     
 </div>
 </div>
+
 <div class="jumbotron jumbotron-fluid" id="jumbo" >
 
     <div class="shadow-lg p-3 mb-5 bg-body rounded" style="background-color:white;">
@@ -893,7 +894,7 @@ style="background-color:#1A6DC3;color:black;">
                   </div>
                 </td>
 
-                <td>Sub:</td>
+                <td>Lab:</td>
                 <td colspan="">
                     
                     <select class="form-control" id="id_lab">
@@ -920,7 +921,7 @@ style="background-color:#1A6DC3;color:black;">
                 <td colspan="5">
                 </td>
                
-                <td>Spl:</td>
+                <td>Project:</td>
                 <td colspan="">
                     <select class="form-control" id="id_spl" style="float:left">
 

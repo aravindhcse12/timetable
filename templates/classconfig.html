@@ -26,6 +26,17 @@ crossorigin="anonymous"></script>
 
 <script type="text/javascript">
 
+$(document).ready(function(){
+$("p").hide();
+$("#help_ul1").hide();
+$("#help_ul2").hide();
+$("#help").click(function(){
+$("p").toggle();
+$("#help_ul1").toggle();
+$("#help_ul2").toggle();
+});
+});
+
 $(document).bind("ajaxSend", function(){
        $("#spinner").show();
      }).bind("ajaxComplete", function(){
@@ -74,9 +85,7 @@ $(document ).ready(function() {
 
 
   $('#button1').click(function(){
-    //alert($('#id_course').val()+','+$('#id_sem').val()+','+$('#id_faculty').val()
-        
-     //   +','+ $('#subject_theory').val() +','+$('#periods').val()); 
+     // alert($('#id_course').val()+','+$('#id_sem').val()+','+$('#id_faculty').val() +','+ $('#subject_theory').val() +','+$('#periods').val()); 
 
    
     if($('#id_course').val() != null && $('#id_sem').val() != null &&
@@ -164,7 +173,27 @@ $(document ).ready(function() {
     }
     else{
 
-        alert("no course selected ");
+        if ($('#id_course').val() == null){
+            alert("No course selected ");
+        }
+        else if($('#id_sem').val() == null){
+            alert("No semister selected");
+        }
+        else if($('#id_dept').val() == null){
+            alert("No department selected");
+        }
+        else if($('#id_faculty').val() == null){
+            alert("No Faculty selected");
+        }
+        else if($('#subject_theory').val() == null){
+            alert("No Subject selected");
+        }
+        else if($('#periods').val() == 0){
+            alert("Set no. of periods");
+        }
+        else if($('#split').val().length<1){
+            alert("Set split periods field");
+        }
     }   
 
 
@@ -210,7 +239,7 @@ $(document ).ready(function() {
 
                 if(sum !=Number( $('#id_period_lab').val()))
                 {
-                    alert("totel periods are not equal to splitted periods sum");
+                    alert("Totel periods are not equal to splitted periods sum");
                     //split number is equal is not equal to total_periods
                 }
                 else
@@ -289,8 +318,27 @@ $(document ).ready(function() {
         }
     }
     else{
-
-        alert("no course selected ");
+        if ($('#id_course').val() == null){
+            alert("No course selected ");
+        }
+        else if($('#id_sem').val() == null){
+            alert("No semister selected");
+        }
+        else if($('#textarea1').val().length <= 0){
+            alert("No lab selected ");
+        }
+        else if($('#subject_lab').val() == null){
+            alert("No lab subject selected ");
+        }
+        else if($('#id_period_lab').val().length < 1){
+            alert("set No. of periods: (for whole week) for lab ");
+        }
+        else if($('#id_count_fac_lab').val().length < 1){
+            alert("set Count of faculty allotment for lab ");
+        }
+        else if($('#split').val().length < 1){
+            alert("Set split periods field");
+        }         
     }   
 
 
@@ -307,7 +355,7 @@ $(document ).ready(function() {
 
         if(split.match(pattern) || split.endsWith(",") || split.startsWith(",") || split.includes(",,"))
         {
-            alert(" invalid characters in split_periods");
+            alert(" Invalid characters in split_periods");
         }
         else
         {
@@ -331,7 +379,7 @@ $(document ).ready(function() {
 
                 if(sum !=Number( $('#id_project_periods').val()))
                 {
-                    alert("totel periods are not equal to splitted periods sum");
+                    alert("Totel periods are not equal to splitted periods sum");
                     //split number is equal is not equal to total_periods
                 }
                 else
@@ -374,8 +422,24 @@ $(document ).ready(function() {
           
       }
       else{
-  
-          alert("no course selected ");
+        if ($('#id_course').val() == null){
+            alert("No course selected ");
+        }
+        else if($('#id_sem').val() == null){
+            alert("No semister selected");
+        }
+        else if ($('#id_subject_project').val() == null){
+            alert("No Project selected");
+        }
+        else if ($('#id_project_periods').val().length < 1){
+            alert("set No. of periods: (for whole week) for project");
+        }
+        else if ($('#id_proj_fac_count').val().length < 1){
+            alert("set Count of faculty allotment for project");
+        }
+        else if($('#split').val().length < 1){
+            alert("Set split periods field");
+        } 
       }   
   
   
@@ -442,16 +506,58 @@ $(document ).ready(function() {
 	});
   });
 </script>
+
 <div class="container-fluid">
 <h2>Class Configuration</h2>
-        <div class="jumbotron jumbotron-fluid" style="background-color:#1A6DC3;color:white; padding: 30px">
+<div class="jumbotron jumbotron-fluid" 
+style="background-color:#1A6DC3;color:black;">
+<div class="jumbotron" style="margin:30px">
+<button id="help" type="button" class="btn btn-info">Help</button>
+    <br><br>
 
-            <h4 style="font-size:16px" padding: 10px;>Step 1: Select the class and regulation to configure.</h4>
-            <h4 style="font-size:16px" padding: 10px;>Step 2: Select the teacher and the subject(only the configured subject and respected regulation subject for that class will be shown)</h4>
-            <h4 style="font-size:16px" padding: 10px;>Step 3: Enter the number of periods for the teacher/subject <b>(for a complete week)</b></h4>
-            <h4 style="font-size:16px" padding: 10px;>Step 4: Click on add.</h4>
+    <p style="font-size:16px"><b><u>Configure Theory subjects</u></b></p>
+    <p style="font-size:16px">Select the Course and semister. </p>
+    <p class="text-justify" style="font-size:16px">Select Department, Faculty, subject(Theory) and set No. of periods: (for whole week), split periods</p>
+    <p class="text-justify" style="font-size:16px">Click on Add.</p>
+    
+   
+    <p style="font-size:16px"><b><u>Configure Lab subjects</u></b></p>
+    <p style="font-size:16px">Select the Course and semister. </p>
+    <p class="text-justify" style="font-size:16px">Select the Course, semister, Subject(Project) and set No. of periods: (for whole week), Count of faculty allotment, split periods.</p>
+    <p class="text-justify" style="font-size:16px">Click on Add.</p>
 
-        </div>
+
+     <p style="font-size:16px"><b><u>Configure project</u></b></p>
+     <p style="font-size:16px">Select the Course and semister. </p>
+     <p class="text-justify" style="font-size:16px"> Select the Course, semister, Subject(Project) and set No. of periods: (for whole week), Count of faculty allotment, split periods.</p>
+     <p class="text-justify" style="font-size:16px">Click on Add.</p>
+
+
+     <p style="font-size:16px"><b><u>Split periods:</u></b> Set split periods field in such a way how you want to schedule</p>
+     <p class="text-justify" style="font-size: 16px;"> For Example: case-1
+         <ul id="help_ul1">
+         <li>If you set No. of periods: (for whole week) field to value 6.</li>
+         <li>And you want schedule each day a single period.</li>
+         <li>Then you have to fill the split periods field with value 1,1,1,1,1,1 </li>
+         </ul>
+     </p>
+     <p class="text-justify" style="font-size: 16px;"> For Example: case-2
+         <ul id="help_ul2">
+         <li>If you set No. of periods: (for whole week) field to value 6.</li>
+         <li>And you want schedule two continous periods in three days of week.</li>
+         <li>Then you have to fill the split periods field with value 2,2,2 </li>
+         </ul>
+     </p>
+     <p class="text-justify" style="font-size: 16px;"> Try out as many combinations as possible, but sum value of split period field should equal to value of No. of periods field. </p>   
+
+    <p style="font-size:16px"><b><u>Delete Button</u></b></p>
+    <p class="text-justify" style="font-size:16px">
+        Delete button will delete the selected class configuration. 
+    </p>
+
+    
+</div>
+</div>
 
 
     <div class="jumbotron my-auto">
@@ -491,7 +597,7 @@ $(document ).ready(function() {
                     </td>
 
                     <td style="text-align:right;">
-                        split_periods:
+                        split periods:
                     </td>
                     <td>
                     <input type="text" class="form-control" id="split" >
@@ -576,9 +682,9 @@ $(document ).ready(function() {
                     </td>
 
                     <td>
-                        <label for="lab_list">LAB?:</label>
+                        <label for="lab_list">Select Lab(s):</label>
                         <select class="form-control" id="lab_list">
-                            <option value="" disabled="disabled" selected="true">Select course</option>
+                            <option value="" disabled="disabled" selected="true">Select lab</option>
                             {% for i in all_lab %}
                             <option value="{{i.name}}">{{i.name}}</option>
                             {% endfor %} 
@@ -610,7 +716,7 @@ $(document ).ready(function() {
 
 
                     <td>
-                     <label for="id_count_fac_lab">Count of faculty allotment? </label>
+                     <label for="id_count_fac_lab">Count of faculty allotment: </label>
                     <input type="number" min="1" class="form-control" id="id_count_fac_lab">
                     </td>
 
@@ -649,7 +755,7 @@ $(document ).ready(function() {
                         </td>
 
                         <td>
-                            <label for="periods">Count of faculty allotment?</label>
+                            <label for="periods">Count of faculty allotment:</label>
                            <input type="number" min="1" class="form-control" id="id_proj_fac_count">
                         </td>
             
@@ -742,6 +848,7 @@ $(document ).ready(function() {
             }
 
         }
+        //alert(str1)
         document.getElementById('id_faculty').innerHTML=str1;
 
 
@@ -760,7 +867,7 @@ $(document ).ready(function() {
 
         //alert(jsonvar1);
 
-        var sem= "<option value='' disabled='disabled' selected='true'>Select course</option>";
+        var sem= "<option value='' disabled='disabled' selected='true'>Select lab</option>";
 
         //var arr1=new Array("1-1","1-2","2-1","2-2","3-1","3-2","4-1","4-2","5-1","5-2","6-1","6-2","7-1","7-2","8-1","8-2");
 

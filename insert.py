@@ -1,4 +1,4 @@
-import pandas as pd
+# import pandas as pd
 #import openpyxl
 from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String
 from sympy import true

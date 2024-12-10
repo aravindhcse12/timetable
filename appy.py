@@ -7,7 +7,7 @@
 #from flask import Flask, render_template, request, redirect, url_for, flash,jsonify,session
 #pip install flask_mail
 
-from flask import *  
+from flask import * 
 
 from flask_sqlalchemy import SQLAlchemy,BaseQuery
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -24,6 +24,7 @@ from openpyxl.styles import PatternFill, Border, Side, Alignment, Protection, Fo
 import datetime
 
 import time
+import os
 
 import random
 from flask_mail import Mail,Message
@@ -61,6 +62,7 @@ app.config['MAIL_PASSWORD'] =credentials['pwd']
 app.config['MAIL_DEFAULT_SENDER'] = credentials['user-id']
 app.config['MAIL_USE_TLS'] = False
 app.config['MAIL_USE_SSL'] = True
+app.config['UPLOAD_FOLDER'] = os.getcwd()
 mail=Mail(app)
 
 def sendmail(subject,recipients,body):
@@ -328,7 +330,7 @@ def login_check():
 
             check=login.query.filter_by(username=username).first()
 
-            print(username,password)
+            print(username,  password)
 
             print(check)
 
@@ -2176,18 +2178,22 @@ def generate_class():
     #return jsonify({'data':"method passed"})
 
 @app.route('/excel_report', methods = ['GET', 'POST'])
+@app.route('/excel_report')
 def excel_report():
 
     if 'loggedin' in session:
     
         file=excel_method()
-        #path="E:/project-old/"
-
-        #flag=1
-
         if(file):
 
-            return jsonify({'msg':"excel report success"})
+            file_path = os.path.join(os.getcwd(), file)
+            print(file_path)
+            if os.path.exists(file_path):
+                print("Hey yoh!")
+                return send_file(file_path, as_attachment=True, attachment_filename=file)
+            else:
+                print("excel report fail")
+                return jsonify({'msg':"excel report fail"})
         else:
             return jsonify({'msg':"excel report fail"})
     else:
@@ -2198,24 +2204,19 @@ def excel_method():
 
     if 'loggedin' in session:
 
-
-        mycursor = mydb.cursor(buffered=True) 
-        
+        mycursor = mydb.cursor(buffered=True)  
         wb = Workbook()
 
-
         all_branch=Teacheradd.query.with_entities(Teacheradd.branch).distinct()
-
-        
 
         count=0
         for branch in all_branch:
 
             print("Branch Faculty:",branch.branch)
 
-            ws1 = wb.create_sheet("Sheet_A",count)
+            ws = wb.create_sheet("Sheet_A",count)
 
-            ws1.title = branch.branch
+            ws.title = branch.branch
             row=col=1
 
             all_teachers=Teacheradd.query.filter_by(branch=branch.branch).all()
@@ -2231,17 +2232,17 @@ def excel_method():
 
                     #print name of the faculty
 
-                    ws1.merge_cells(start_row=row, start_column=col, end_row=row, end_column=col+5)
+                    ws.merge_cells(start_row=row, start_column=col, end_row=row, end_column=col+5)
 
-                    ws1.cell(row=row,column=col,value="Faculty Name:"+teacher.name).font = Font(size = 14, bold = True)
+                    ws.cell(row=row,column=col,value="Faculty Name:"+teacher.name).font = Font(size = 14, bold = True)
 
                     thin_border = Border(outline=Side(style='thin'))
-                    ws1.cell(row=row,column=col).border=thin_border
+                    ws.cell(row=row,column=col).border=thin_border
 
-                    ws1.row_dimensions[row].height = 20
+                    ws.row_dimensions[row].height = 20
                     #st=chr(col+64)
                     #print("ascii",st)
-                    #ws1.column_dimensions[st].width = 30.0
+                    #ws.column_dimensions[st].width = 30.0
 
                     row+=1
 
@@ -2263,11 +2264,11 @@ def excel_method():
                     val=mycursor.fetchall()
 
                     for j in val:
-                        ws1.cell(row=row,column=col,value=j[0]).font = Font(size = 12, bold = True)
+                        ws.cell(row=row,column=col,value=j[0]).font = Font(size = 12, bold = True)
                         
-                        ws1.column_dimensions[chr(col+64)].width = 20.0
+                        ws.column_dimensions[chr(col+64)].width = 20.0
                         col+=1
-                    ws1.row_dimensions[row].height = 50
+                    ws.row_dimensions[row].height = 50
 
 
                     row+=1
@@ -2286,31 +2287,92 @@ def excel_method():
 
                             #print(r[q])
 
-                            ws1.cell(row=row,column=col,value=r)
-                            ws1.column_dimensions[chr(col+64)].width = 20.0
+                            ws.cell(row=row,column=col,value=r)
+                            ws.column_dimensions[chr(col+64)].width = 20.0
                             col+=1
 
-                        ws1.row_dimensions[row].height = 50 
-                        row+=1
+                        ws.row_dimensions[row].height = 50 
+                        row+=1  
                 row+=2
                 col=1      
 
             count+=1
 
-        file=datetime.datetime.now().strftime("Faculty-reports%Y%m%d%H%M%S")
+        # course wise timetable report
+        all_courses = Courseadd.query.with_entities(Courseadd.name).distinct()
+
+        count = count
+        
+        for course in all_courses:
+            print("course:", course, course.name)
+
+            ws = wb.create_sheet("Sheet_A",count)
+            ws.title = course.name
+            row=col=1
+
+            # mycursor.execute("SHOW TABLES FROM `jntuk1` WHERE Tables_in_jntuk1 LIKE `{0}`;".format(course.name+'%'))
+            mycursor.execute("SHOW TABLES;")
+            result = mycursor.fetchall()
+
+            all_classes = []
+            for val in result:
+                if str(course.name).lower() in val[0]:
+                    all_classes.append(val[0])
+
+            print(all_classes)
+
+            for cl in all_classes:
+                ws.merge_cells(start_row=row, start_column=col, end_row=row, end_column=col+5)
+                ws.cell(row=row,column=col,value="class Name:"+cl).font = Font(size = 14, bold = True)
+                thin_border = Border(outline=Side(style='thin'))
+                ws.cell(row=row,column=col).border=thin_border
+                ws.row_dimensions[row].height = 20           
+
+                row+=1
+    
+                try:
+                    mycursor.execute("SHOW COLUMNS FROM  `{0}`".format(cl))
+                except:
+                    print("An exception occurred")
+                    row+=2
+                    col=1 
+                    continue
+
+                val=mycursor.fetchall()
+                for j in val:
+                    ws.cell(row=row,column=col,value=j[0]).font = Font(size = 12, bold = True)
+                    ws.column_dimensions[chr(col+64)].width = 20.0
+                    col+=1
+                ws.row_dimensions[row].height = 50
+
+                row+=1
+                col=1
+                index=0
+                mycursor.execute("SELECT * FROM `{0}`".format(cl))
+                val=mycursor.fetchall()
+
+                for j in val:
+
+                    print("row:",j)
+                    col=1
+                    for r in j:
+                        ws.cell(row=row,column=col,value=r)
+                        ws.column_dimensions[chr(col+64)].width = 20.0
+                        col+=1
+
+                    ws.row_dimensions[row].height = 50 
+                    row+=1
+                row+=2
+                col=1   
+            count+=1          
+
+        file=datetime.datetime.now().strftime("Timetable-reports%Y%m%d%H%M%S.xltx")
+        print('file', file)
         wb.save(file)
         wb.close()
 
-
-        time.sleep(2.4)
-        
-        #redirect('/download/{0}'.format(file))
-        
-        #file1 = open("faculty-report.xlsx", "rb")
-
-            
-                
-        return 1
+        time.sleep(1.4)
+        return file
     else:
         return redirect(url_for('dashboard'))
 
@@ -2331,8 +2393,6 @@ def delete_all():
         get_data=request.get_json()
 
         #class_reset
-
-
 
         flag=class_reset(get_data['data'])
 
@@ -2456,6 +2516,7 @@ def class_reset(get_class):
                     db.session.commit()
 
                     i.faculty='NA'
+                    print('hey hey!')
                     db.session.commit()
 
                 else:
@@ -4223,7 +4284,7 @@ def classtable_entry():
 
                         else:
                             print("min error")
-                            return jsonify({'min_error':" faculty count exceeded"})
+                            return jsonify({'min_error':" faculty count does not matched"})
                     else:
                         return jsonify({'duplicate_faclty':"faculty should not be repeated"})
                 else:#ALREADY SOMEONE IS THERE
@@ -5680,10 +5741,10 @@ def insertcourse():
                 my_data = Courseadd(coursename,semisters,dept)
                 db.session.add(my_data)
                 db.session.commit()
-                flash("course inserted successfully ")
+                flash("Course inserted successfully ")
 
             else:
-                flash("course is already present ")
+                flash("Course is already present ")
 
     
             return redirect(url_for('courseadd'))
@@ -6284,5 +6345,6 @@ def labconfig():
         return render_template("labconfig.html",all_course=all_course,all_teacher=all_teacher,all_subject=all_subject,json_object=pythontojson,access=session['type'])
     else:
         return redirect(url_for('dashboard'))
+    
 if __name__ == "__main__":
     app.run(debug=True)

@@ -35,7 +35,7 @@ app = Flask(__name__)
 app.secret_key = "Secret Key"
  
 #SqlAlchemy Database Configuration With Mysql
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:''@localhost/jntuk1'
+app.config['SQLALCHEMY_DATABASE_URI'] = "mysql://root:Tomahawk_123!@localhost/jntuk1"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
  
 db = SQLAlchemy(app)
@@ -50,9 +50,14 @@ total_list=[]
   database="jntuk"
 )
 """
+# Get the directory of the current script
+base_dir = os.path.dirname(os.path.abspath(__file__))
+
+# Construct the absolute path to config.json
+config_path = os.path.join(base_dir, 'config.json')
 
 #mail variables
-with open('config.json','r') as f:
+with open(config_path,'r') as f:
     credentials=json.load(f)['credentials']
 
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'

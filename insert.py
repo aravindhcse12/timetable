@@ -3,7 +3,7 @@
 from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String
 from sympy import true
 
-engine = create_engine('mysql://root:''@localhost/jntuk1', echo = True)
+engine = create_engine(f"mysql://root:{0}@localhost/jntuk1".format('Tomahawk_123!'), echo = True)
 meta = MetaData()
 
 from sqlalchemy.orm import sessionmaker
@@ -16,7 +16,7 @@ import mysql.connector
 mydb = mysql.connector.connect(
 host="localhost",
 user="root",
-password="",
+password="Tomahawk_123!",
 database="jntuk1")
 
 mycursor = mydb.cursor(buffered=True)

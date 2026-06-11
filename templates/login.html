@@ -103,11 +103,15 @@
          <div class="form-group">
           <label>
             <a href="/reset_password" style="color:rgb(14, 14, 200)">Forgot password?</a>
-            <span style="margin-left: 90px;"><b>*Default values are pre-filled for guests. Feel free to proceed!</b></span>
           </label>
         </div>
 
          <button class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>
+
+         <div class="text-center" style="padding-top: 15px;">
+           <span>Don't have an account? </span>
+           <a href="{{ url_for('register') }}" style="color:rgb(14, 14, 200)">Register here</a>
+         </div>
        </form>
 
 </div>

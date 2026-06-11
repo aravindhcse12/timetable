@@ -31,7 +31,6 @@ $(document).ready(function(){
   });
 
   $("#check_all").on("click", function () {
-        alert("Delete all");
 		if ($("input:checkbox").prop("checked")) {
 			$("input:checkbox[name='row-check']").prop("checked", true);
 		} else {
@@ -436,8 +435,6 @@ $(document).ready(function(){
 
         var semupdate=document.getElementById("semisterlistupdate").value;
 
-        alert(semupdate);
-
         console.log(semupdate);
 
         var jsonvar1 = JSON.parse('{{ json_object | tojson | safe}}');
@@ -478,7 +475,6 @@ $(document).ready(function(){
         //alert(str1);
 
         str1+="<option>"+'hai'+"-"+'hai'+"</option>";
-        alert(str1);
         document.getElementById('sem1').innerHTML=str1;
 
     }

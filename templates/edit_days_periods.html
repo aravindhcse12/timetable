@@ -43,45 +43,45 @@ Edit days/periods/Max_periods
              <div class="table-responsive">
             <table class="table" style="background-color:white">
             <tr>
-                <td width="20%">Select No. of Days :</td>
+                <td width="20%">Select No. of Working Days :</td>
                 <td>
-                    <select class="form-control" id="id_days" value="{{day}}">
-                            <option value="3">3</option>
-                            <option value="4">4</option>
-                            <option value="5">5</option>
-                            <option value="6">6</option>
-                            <option value="7">7</option>
+                    <select class="form-control" id="id_days">
+                            <option value="3" {% if day == 3 %}selected{% endif %}>3</option>
+                            <option value="4" {% if day == 4 %}selected{% endif %}>4</option>
+                            <option value="5" {% if day == 5 %}selected{% endif %}>5</option>
+                            <option value="6" {% if day == 6 %}selected{% endif %}>6</option>
+                            <option value="7" {% if day == 7 %}selected{% endif %}>7</option>
                     </select>
                 </td>
                 </tr>
                 <tr>
-                <td>Select No. of Periods :</td>
+                <td>Select No. of Periods:</td>
                 <td>
-                    <select class="form-control" id="id_periods" value="{{periods}}">
-                            <option value="2">2</option>
-                            <option value="3">3</option>
-                            <option value="4">4</option>
-                            <option value="5">5</option>
-                            <option value="6">6</option>
-                            <option value="7">7</option>
-                            <option value="8">8</option>
-                            <option value="9">9</option>
+                    <select class="form-control" id="id_periods">
+                            <option value="2" {% if periods == 2 %}selected{% endif %}>2</option>
+                            <option value="3" {% if periods == 3 %}selected{% endif %}>3</option>
+                            <option value="4" {% if periods == 4 %}selected{% endif %}>4</option>
+                            <option value="5" {% if periods == 5 %}selected{% endif %}>5</option>
+                            <option value="6" {% if periods == 6 %}selected{% endif %}>6</option>
+                            <option value="7" {% if periods == 7 %}selected{% endif %}>7</option>
+                            <option value="8" {% if periods == 8 %}selected{% endif %}>8</option>
+                            <option value="9" {% if periods == 9 %}selected{% endif %}>9</option>
                     </select>
                 </td>
             </tr>
 
             <tr>
-              <td>No. of periods in First half:</td>
+              <td>No. of periods in first half:</td>
               <td>
-                  <select class="form-control" id="morning_periods" value="{{morning_periods}}">
-                          <option value="2">2</option>
-                          <option value="3">3</option>
-                          <option value="4">4</option>
-                          <option value="5">5</option>
-                          <option value="6">6</option>
-                          <option value="7">7</option>
-                          <option value="8">8</option>
-                          <option value="9">9</option>
+                  <select class="form-control" id="morning_periods">
+                          <option value="2" {% if morning_periods == 2 %}selected{% endif %}>2</option>
+                          <option value="3" {% if morning_periods == 3 %}selected{% endif %}>3</option>
+                          <option value="4" {% if morning_periods == 4 %}selected{% endif %}>4</option>
+                          <option value="5" {% if morning_periods == 5 %}selected{% endif %}>5</option>
+                          <option value="6" {% if morning_periods == 6 %}selected{% endif %}>6</option>
+                          <option value="7" {% if morning_periods == 7 %}selected{% endif %}>7</option>
+                          <option value="8" {% if morning_periods == 8 %}selected{% endif %}>8</option>
+                          <option value="9" {% if morning_periods == 9 %}selected{% endif %}>9</option>
                   </select>
               </td>
             </tr>

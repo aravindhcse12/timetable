@@ -1,4 +1,4 @@
-
+﻿
 #from calendar import c
 #from shutil import register_archive_format
 #from ssl import ALERT_DESCRIPTION_BAD_CERTIFICATE_HASH_VALUE
@@ -33,11 +33,18 @@ from insert import updateF,deleteF,show_all_tables,create_table,mycursor,mydb
 
 app = Flask(__name__)
 app.secret_key = "Secret Key"
- 
-#SqlAlchemy Database Configuration With Mysql
-app.config['SQLALCHEMY_DATABASE_URI'] = "mysql://root:Tomahawk_123!@localhost/jntuk1"
+
+# SqlAlchemy database configuration -- migrated from MySQL to SQLite.
+# The raw sqlite3 connection in ``insert.py`` points at the SAME database
+# file so the ORM models and the raw cursor share data.
+from insert import DB_PATH as _DB_PATH  # noqa: E402
+
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + _DB_PATH
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
- 
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+    'connect_args': {'check_same_thread': False, 'timeout': 15}
+}
+
 db = SQLAlchemy(app)
 
 total_list=[]
@@ -71,32 +78,7 @@ app.config['UPLOAD_FOLDER'] = os.getcwd()
 mail=Mail(app)
 
 def sendmail(subject,recipients,body):
-    print("HAII")
-    print(credentials)
-    try:
-
-        """msg = Message(
-                'Hello',
-                sender ='aravindhchalla@gmail.com',
-                recipients = ['dsubbu7661@gmail.com']
-               )
-        msg.body = 'Hello Flask message sent from Flask-Mail'
-
-        mail.send(msg)"""
-        msg=Message()   
-        msg.subject=subject
-        msg.recipients=[recipients]
-        msg.html =body
-
-        print(msg.html,msg.recipients,msg.subject)
-        mail.send(msg)
-        
-
-        print(mail.send(msg))
-
-    except Exception as e:
-        print("Exception-",str(e))
-        return
+    pass
 
 @app.route('/exclude',methods = ['GET', 'POST'])
 def exclude():
@@ -390,6 +372,61 @@ def login_check():
         return redirect(url_for('dashboard'))
 
 
+VALID_TYPES = {'faculty_type', 'dept_type', 'principal_type'}
+
+@app.route('/register', methods=['GET'])
+def register():
+    if 'loggedin' in session:
+        return redirect(url_for('dashboard'))
+    return render_template('register.html')
+
+
+@app.route('/register_check', methods=['POST'])
+def register_check():
+    if 'loggedin' in session:
+        return redirect(url_for('dashboard'))
+
+    email        = request.form.get('email', '').strip()
+    password     = request.form.get('password', '')
+    confirm_pass = request.form.get('confirm_password', '')
+    user_type    = request.form.get('user_type', '')
+
+    form_data = {'email': email, 'user_type': user_type}
+
+    if not email or not password or not confirm_pass or not user_type:
+        flash('All fields are required.', 'danger')
+        return render_template('register.html', form_data=form_data)
+
+    if user_type not in VALID_TYPES:
+        flash('Invalid user type selected.', 'danger')
+        return render_template('register.html', form_data=form_data)
+
+    if len(password) < 6:
+        flash('Password must be at least 6 characters.', 'danger')
+        return render_template('register.html', form_data=form_data)
+
+    if password != confirm_pass:
+        flash('Passwords do not match.', 'danger')
+        return render_template('register.html', form_data=form_data)
+
+    existing = login.query.filter_by(username=email).first()
+    if existing:
+        flash('An account with this email already exists.', 'danger')
+        return render_template('register.html', form_data=form_data)
+
+    new_user = login(
+        username=email,
+        password=generate_password_hash(password),
+        type=user_type,
+        otp=0
+    )
+    db.session.add(new_user)
+    db.session.commit()
+
+    flash('Account created successfully. Please sign in.', 'success')
+    return redirect(url_for('dashboard'))
+
+
 @app.route('/faculty_table', methods = ['GET', 'POST'])
 def faculty_table():
 
@@ -445,1742 +482,444 @@ class login(db.Model):
 
         
 db.create_all()
-@app.route('/generate_class', methods = ['GET', 'POST'])
+@app.route('/generate_class', methods=['GET', 'POST'])
 def generate_class():
-
-    if 'loggedin' in session:
-
-        if(session['type']=='faculty_type'):
-
-            return redirect(url_for('faculty_table'))        
-
-        mycursor = mydb.cursor(buffered=True)
-
-
-        get_data=request.get_json()
-
-        msg=""
-
-        #For lab configuration of single class
-
-        #get_data=request.get_json()
-
-        get_class_ele=classconfig_table.query.filter_by(classname=get_data['data'],type="LAB").all()
-
-
-        get_session=day_period.query.get(1)
-
-        already_lab_day=[] #on successful updation of single day add day to this of split
-
-        for row in  get_class_ele:
-            print(row.subject)
-            print(row.faculty)
-
-            if(row.total_periods == row.allocated):
-                continue
-
-            if(row.faculty!="NA"):
-
-                msg="{0} subject is already been assigned with faculty eiether you remove the faculty or do manually".format(row.subject)
-                continue
-                
-            split_slash=row.split.split('/')
-
-            get_split=[]
-
-            print(split_slash)
-            
-            if(len(split_slash)>1):
-                
-                for pc in split_slash:
-                        get_split.append(pc.split(','))
-
-                for j in get_split[1]:
-                        if(j in get_split[0]):
-                                    get_split[0].remove(j)
-
-                get_split=get_split[0]
-
-                print(get_split)
-            else:
-
-                get_split=split_slash[0].split(',')
-
-            fac_lab_list=[]
-
-            update_ready=[]
-
-            flag_overflow=0
-
-            split_count=0
-
-            collect_split=[]
-            print(row.subject,"split",get_split)
-            for sp in get_split:
-
-                #find the best fit of split eiether morning or afternoon
-
-                morning=int(get_session.morning_periods)-int(sp)
-
-                print("morning",morning)
-
-                afternoon=int(get_session.periods-get_session.morning_periods)-int(sp)
-                print("afternoon",afternoon)
-
-                flag_both=0
-
-                if(morning < afternoon and morning>-1):
-                    #select morning
-                    print("morning if")
-                    flag=0
-                elif(afternoon < morning and afternoon>-1):
-                    #select afternoon
-                    print("afternoon elif")
-                    flag=1
-
-                else:
-                    print("else random")
-                    if(afternoon>-1 and morning>-1):
-                        print("afternoon elif")
-                        flag=random.choice([0,1])
-                        flag_both=1
-                    elif(morning>-1):
-                        flag=0
-                    else:
-                        flag=1
-
-
-                print("flag",flag)
-
-                #generate strings of periods
-                get_day=day_period.query.get(1)
-
-                if(flag==0):
-
-                    start=1
-                    print("morning selected start:",start)
-                    
-                else:#afternoon
-                    start=int(get_day.morning_periods)+1
-                    print("afternoon selected start:",start)
-
-                #collecting days
-
-                get_day=day_period.query.get(1)
-                day=int(get_day.day)
-
-                print("max day:",day)
-
-                day_list=['MON','TUE','WED','THU','FRI','SAT','SUN']   
-
-        
-                day_list=day_list[:day]
-
-                random.shuffle(day_list)
-
-                period_colloction_final=[]
-
-                if(flag_both==1):
-
-                    for start in list([1,get_day.morning_periods+1]):
-                         for d in day_list:
-
-                                        
-                            period_collection=[]
-
-                            if(d in already_lab_day):
-                                continue
-
-                            for start_scale in range(start,start+int(sp)):
-
-                                period_collection.append(d+"--"+str(start_scale))
-
-                            period_colloction_final.append(period_collection)
-                else:
-
-                    for d in day_list:
-
-                                        
-                        period_collection=[]
-
-                        if(d in already_lab_day):
-                            continue
-
-
-                        for start_scale in range(start,start+int(sp)):
-
-                            period_collection.append(d+"--"+str(start_scale))
-
-                        period_colloction_final.append(period_collection)
-
-
-
-                if(period_colloction_final):
-                    print("period collection_final:",period_colloction_final)
-                else:
-
-                    flag_overflow=1
-                    print("do it manually no slot found")
-                    break
-
-                #get head faculty
-
-                
-                index=row.subject.find(" LAB")
-
-                sub_theory=row.subject[:index]
-
-                mycursor.execute("SELECT faculty FROM classconfig_table WHERE subject='{0}' AND type='{2}' AND classname='{1}'".format(sub_theory,row.classname,"THEORY"))
-
-                val=mycursor.fetchall()
-
-                if(val):
-                    print("subject theory for lab head faculty:",val[0][0])
-                    get_head=Teacheradd.query.filter_by(name=val[0][0]).first()
-
-                    
-                    mycursor.execute("SELECT total_Periods,allocated FROM classconfig_table WHERE faculty='{0}' AND type='{2}'".format(val[0][0],row.classname,"THEORY"))
-
-                    summ_check=mycursor.fetchall()
-
-                    summ=0
-                    for p in summ_check:
-
-                        print(p)
-                        #this summm must to be scheduled
-                        summ+=int(p[0])-int(p[1])
-
-                    designation_dic={'Professor':'proffesor','Associate Professor':'Assoc_prof','Assistant Professor':'Asst_prof','Assistant Professor(C)':'Asst_prof_c'}                        
-
-
-                    mycursor.execute("select `{0}` FROM day_periods WHERE id={1}".format(designation_dic[get_head.role],1))
-
-                    designation=mycursor.fetchall()
-
-                    #day_period.query.get(1)
-
-                    
-                    if(get_head.work_load+int(sp)+summ<=int(designation[0][0]) ):
-
-
-                        print(val[0][0],get_head.work_load+int(sp)+summ," is less than his/her workload can procced")
-
-                        if(val[0][0] not  in fac_lab_list):
-                            fac_lab_list.append(val[0][0])
-                    else:
-
-                        if(get_head.role=="Assistant Professor(C)"):
-                            fac_lab_list.append(val[0][0])
-                        else:   
-                            print(val[0][0],"head faculty is buzy")
-                    
-                        
-                else:
-                    
-                    print("No subject found,so no head faculty")
-
-                for p in period_colloction_final:
-
-                    flag_select=0
-
-                    for row_p in p:
-                    
-                        period_split=row_p.split("--")
-                        #select class
-                        mycursor.execute("SELECT `{1}` FROM `{0}` WHERE DAY='{2}';".format(get_data['data'],period_split[1],period_split[0]))
-
-                        val1=mycursor.fetchall()
-
-                        if(val1[0][0]!="--"):
-                            flag_select=1
-
-                            break   
-
-                        #select lab
-
-                        all_lab=row.lab.split(',')
-                        for lab in all_lab:
-
-                            mycursor.execute("SELECT `{1}` FROM `{0}` WHERE DAY='{2}';".format(lab,period_split[1],period_split[0]))
-
-                            val1=mycursor.fetchall()
-                    
-                            if(val1[0][0]!="--"):
-
-                                flag_select=1
-
-                                break   
-
-
-                        #select fac
-                        print("faculty checking slot",row_p)
-                        if(len(fac_lab_list)>1):
-                            mycursor.execute("SELECT `{1}` FROM `{0}` WHERE DAY='{2}';".format(fac_lab_list[0],period_split[1],period_split[0]))
-
-                            val1=mycursor.fetchall()
-                    
-                            if(val1[0][0]!="--"):
-                                flag_select=1
-
-                                break 
-
-                    if(flag_select):
-                        #updated_day=p[0].split('--')
-                        #already_lab_day.append(updated_day[0])
-                        print('continue failed split',row_p,val1[0][0])
-                        continue
-
-                    print("for lab this split is success",p)
-
-                    if(p):
-
-
-                        if(len(get_split)>1):
-                            updated_day=p[0].split('--')
-                            already_lab_day.append(updated_day[0])
-
-
-                        update_ready.append(p)
-
-                        collect_split.append(int(sp))
-
-                        split_count+=1
-                        break
-                    
-                    """
-                    #success
-                    temp=[]
-
-                    temp=p
-
-                    #update_ready=update_ready+p
-
-                    #means this day and its periods are free 
-
-                    if(temp):
-                        split_count+=1
-                        local_day=p
-                        #update_ready=update_ready+p
-                        
-                    else:
-                    #if(not update_ready):
-                        print("Didn't find slot of lab")
-                        break
-                
-                print("update_ready",update_ready)
-                #start selecting another  faculty to reach faculty_count of this lab"""
-
-                
-                """if(update_ready):
-                    updated_day=p[0].split('--')
-                    already_lab_day.append(updated_day[0])"""
-
-
-
-            print("")
-            print("split_count",split_count,"get_split",len(get_split))
-
-            if(split_count==len(get_split)):
-
-                for pr in update_ready:
-                    updated_day=pr[0].split('--')
-                    already_lab_day.append(updated_day[0])
-
-
-            else:
-
-                #go for next lab
-                print("lab:",row.subject,"didn't get free slots")
-                continue#go to next lab
-
-            #regular_list = [[1, 2, 3, 4], [5, 6, 7], [8, 9]]
-
-            update_ready = [item for sublist in update_ready for item in sublist]
-
-            if(flag_overflow):
-                continue#go to next lab
-
-            flag_fac_count=1 
-
-            if(fac_lab_list):
-                # head faculty is there get another faculty data according to list of update_ready list
-
-                #designation_list=["proffesor","Assoc_prof","Asst_prof","Asst_prof_c"]
-
-                designation_list=["Professor","Associate Professor","Assistant Professor","Assistant Professor(C)"]
-
-
-
-                print("designation list",designation_list)
-
-                head_fac_dept=Teacheradd.query.filter_by(name=fac_lab_list[0]).first()
-
-
-                print("id:",head_fac_dept.id)
-                position=designation_list.index(head_fac_dept.role)
-                print("position:",position)
-
-                course=row.classname.split("@")
-
-                subject_dept=Subject.query.filter_by(name=row.subject,course=course[0]).first()
-
-                print("subject_dept",subject_dept.dept,subject_dept.id,subject_dept.name)
-
-
-                mycursor.execute("SELECT * from facultyadd WHERE branch='{0}' AND name <> '{1}' ORDER BY work_load ASC ".format(subject_dept.dept,fac_lab_list[0]))
-             
-                dep_fac=mycursor.fetchall()
-
-                print("faculty lab count",row.f_count)
-
-                #backup_list=[]
-                
-                for dep in dep_fac:
-
-                    support_fac=Teacheradd.query.filter_by(name=dep[1]).first()
-
-                    if(support_fac.exclude==1):
-                        continue
-
-                    mycursor.execute("SELECT total_Periods,allocated FROM classconfig_table WHERE faculty='{0}' AND type='{2}'".format(dep[1],row.classname,"THEORY"))
-
-                    summ_check=mycursor.fetchall()
-
-                    summ=0
-                    for pr in summ_check:
-
-                        print(p)
-                        #this summm must to be scheduled
-                        summ+=int(pr[0])-int(pr[1])
-
-                    designation_dic={'Professor':'proffesor','Associate Professor':'Assoc_prof','Assistant Professor':'Asst_prof','Assistant Professor(C)':'Asst_prof_c'}
-
-                    mycursor.execute("select `{0}` FROM day_periods WHERE id={1}".format(designation_dic[support_fac.role],1))
-
-                    designation=mycursor.fetchall()
-
-                    #day_period.query.get(1)
-
-                    
-                    if(support_fac.work_load+int(sp)+summ<=int(designation[0][0]) or (support_fac.role=="Assistant Professor(C)")):
-
-
-                        print(dep[1],support_fac.work_load+int(sp)+summ," is less  his/her workload can procced")
-
-                        #fac_lab_list.append(val[0][0])
-                    else:
-                        #backup_list.append(dep[1])
-                        print(val[0][0],get_head.work_load+int(sp)+summ," is greater than his/her workload cannot  procced")
-                        #break         
-                        continue        
-                        
-                    while(len(fac_lab_list)<row.f_count):
-                        select_flag=0
-
-                        if(dep[3]=="Assistant Professor(C)"):
-                            
-
-                            #select  table and append to fac_lab_list
-
-                            for check in update_ready:
-
-                                print("in check for",check) 
-
-                                period_split=check.split("--")
-                                #select class
-                                mycursor.execute("SELECT `{1}` FROM `{0}` WHERE DAY='{2}';".format(dep[1],period_split[1],period_split[0]))
-
-                                val1=mycursor.fetchall()
-
-                                if(val1[0][0]!="--"):
-                                    select_flag=1
-                                    break 
-
-                            #if not free break
-                            if(select_flag==0):
-                                fac_lab_list.append(dep[1])
-                                break
-                        else:
-                            new_position=designation_list.index(dep[3])
-
-                            if(new_position>position):
-
-                                #select  table and append to fac_lab_list
-
-                                for check in update_ready:
-
-                                    print("in check for",check) 
-
-                                    period_split=check.split("--")
-                                    #select class
-                                    mycursor.execute("SELECT `{1}` FROM `{0}` WHERE DAY='{2}';".format(dep[1],period_split[1],period_split[0]))
-
-                                    val1=mycursor.fetchall()
-
-                                    if(val1[0][0]!="--"):
-                                        select_flag=1
-                                        break                                     
-                                    
-
-                                #if not free break
-
-                                if(select_flag==0):
-                                    position=new_position
-
-                                    fac_lab_list.append(dep[1])
-                                break
-                            else:
-                                break
-                        
-
-                print("final faculty list to this lab",fac_lab_list)
-                    
-                #print(dep[0][0],dep[0][1],dep[0][2],dep[0][3],dep[0][4])
-
-                #k=0
-                if(len(fac_lab_list)!=row.f_count):
-
-                    """while(len(fac_lab_list)<row.f_count):
-
-                        #fac_lab_list.append(backup_list[k])
-                        k+=1"""
-                    flag_fac_count=0
-
-                print("")
-            else:
-                position=-1
-                #head faculty is buzy assign random faculties according to list of update_ready list
-
-                #designation_list=["proffesor","Assoc_prof","Asst_prof","Asst_prof_c"]
-
-                designation_list=["Professor","Associate Professor","Assistant Professor","Assistant Professor(C)"]
-                print("designation list",designation_list)
-
-                #head_fac_dept=Teacheradd.query.filter_by(name=fac_lab_list[0]).first()
-
-
-                #print("id:",head_fac_dept.id)
-                #position=designation_list.index(head_fac_dept.role)
-                #print("position:",position)
-
-                course=row.classname.split("@")
-
-                subject_dept=Subject.query.filter_by(name=row.subject,course=course[0]).first()
-
-                print("subject_dept",subject_dept.dept,subject_dept.id,subject_dept.name)
-
-
-                mycursor.execute("SELECT * from facultyadd WHERE branch='{0}'  ORDER BY work_load ASC ".format(subject_dept.dept))
-
-                
-                dep_fac=mycursor.fetchall()
-
-
-
-                print("faculty lab count",row.f_count)
-
-                #backup_list=[]
-                for dep in dep_fac:
-
-                    support_fac=Teacheradd.query.filter_by(name=dep[1]).first()
-
-                    if(support_fac.exclude==1):
-                        continue
-
-                    mycursor.execute("SELECT total_Periods,allocated FROM classconfig_table WHERE faculty='{0}' AND type='{2}'".format(dep[1],row.classname,"THEORY"))
-
-                    summ_check=mycursor.fetchall()
-
-                    summ=0
-                    for pr in summ_check:
-
-                        #print(p)
-                        #this summm must to be scheduled
-                        summ+=int(pr[0])-int(pr[1])
-
-                    designation_dic={'Professor':'proffesor','Associate Professor':'Assoc_prof','Assistant Professor':'Asst_prof','Assistant Professor(C)':'Asst_prof_c'}
-
-                    mycursor.execute("select `{0}` FROM day_periods WHERE id={1}".format(designation_dic[support_fac.role],1))
-
-                    designation=mycursor.fetchall()
-
-                    #day_period.query.get(1)
-
-                    
-                    if(support_fac.work_load+int(sp)+summ<=int(designation[0][0]) or (support_fac.role=="Assistant Professor(C)") ):
-
-
-                        print(dep[1],support_fac.work_load+int(sp)+summ," is less than his/her workload can procced")
-
-                        #fac_lab_list.append(val[0][0])
-                    else:
-                        print(dep[1],support_fac.work_load+int(sp)+summ," is greater than his/her workload cannot  procced")
-                        #break       
-                        continue          
-
-                
-                    while(len(fac_lab_list)<row.f_count):
-                        select_flag=0
-
-                        if(dep[3]=="Assistant Professor(C)"):
-
-                            #select  table and append to fac_lab_list
-
-                            for check in update_ready:
-
-                                print("in check for",check)
-
-                                period_split=check.split("--")
-                                #select class
-                                mycursor.execute("SELECT `{1}` FROM `{0}` WHERE DAY='{2}';".format(dep[1],period_split[1],period_split[0]))
-
-                                val1=mycursor.fetchall()
-
-                                if(val1[0][0]!="--"):
-                                    select_flag=1
-                                    break 
-
-                            #if not free break
-                            if(select_flag==0):
-                                fac_lab_list.append(dep[1])
-                                position=3
-                            break
-                        else:
-
-                            #backup_list.append(dep[1])
-                        
-                            new_position=designation_list.index(dep[3])
-
-                            if(new_position>position):
-
-                                #select  table and append to fac_lab_list
-
-                                for check in update_ready:
-
-                                    period_split=check.split("--")
-                                    #select class
-                                    mycursor.execute("SELECT `{1}` FROM `{0}` WHERE DAY='{2}';".format(dep[1],period_split[1],period_split[0]))
-
-                                    val1=mycursor.fetchall()
-
-                                    if(val1[0][0]!="--"):
-                                        select_flag=1
-
-                                        break                                     
-                                    
-
-                                #if not free break
-                                 #if not free break
-                                if(select_flag==0):
-                                    position=new_position
-
-                                    fac_lab_list.append(dep[1])
-                                break
-                                
-                            else:
-                                break
-
-
-                #k=0
-                if(len(fac_lab_list)!=row.f_count):
-
-
-                    flag_fac_count=0
-
-
-                print("final faculty list to this lab",fac_lab_list)
-                    
-                #print(dep[0][0],dep[0][1],dep[0][2],dep[0][3],dep[0][4])
-
-            if(flag_fac_count==1):#update it 
-
-                #updation code 
-
-                print(row.subject,"faculty count satisfied ")
-
-
-                #update split by appending '/' and scale
-
-                data=classconfig_table.query.get(int(row.id))
-    
-
-
-                data.split=data.split+"/"+data.split
-                db.session.commit()
-
-                data.faculty=(',').join(fac_lab_list)
-                db.session.commit()
-
-
-                for u in update_ready:
-
-                    
-                    period_split=u.split("--")
-
-                    #update class
-                    mycursor.execute("UPDATE `{1}` SET `{0}`='{3}' WHERE Day='{2}';".format(period_split[1],row.classname,period_split[0],row.subject))
-                    mydb.commit()
-
-                    #select fac
-
-                    for fac_u in fac_lab_list:
-    
-                        #update faculty remove "--"
-                        mycursor.execute("UPDATE `{1}` SET `{0}`='{3}' WHERE `Day`='{2}';".format(period_split[1],fac_u,period_split[0],row.classname+"/"+row.subject))
-
-                        mydb.commit()
-
-                        faculty=Teacheradd.query.filter_by(name=fac_u).first()
-
-                        faculty.work_load=faculty.work_load+1
-                        db.session.commit()                                    
-
-
-                    #update workload,split,allocated
-                    all_lab=row.lab.split(',')
-                    for lab_u in all_lab:
-
-                        mycursor.execute("UPDATE `{1}` SET `{0}`='{3}' WHERE `Day`='{2}';".format(period_split[1],lab_u,period_split[0],row.classname+"/"+row.subject))
-
-                        mydb.commit()
-
-
-
-                    data=classconfig_table.query.get(int(row.id))
-                    
-                    data.allocated=data.allocated+1
-                    db.session.commit()
-
-                    if(data.dayperiod=="@"):
-                        data.dayperiod=u
-                        db.session.commit()
-                    else:
-                        data.dayperiod= data.dayperiod +","+u
-                        db.session.commit()
-                    
-
-                print(already_lab_day)
-                print(fac_lab_list)
-                print(update_ready)
-
-                updated_day=p[0].split('--')
-
-                already_lab_day.append(updated_day[0])
-
-                print("")
-            else:
-                #remove those recently added elements
-                print("faculty count for this is doesnot satisfied")
-                k=0
-                while(k<len(get_split)):
-                    already_lab_day.pop()
-                    k=k+1
-
-            update_ready=[]
-                        
-
-
-        print("classname:",get_data['data'])
-
-
-
-
-
-        mycursor = mydb.cursor(buffered=True)
-        #generate electives
-
-
-        #first collect the elective which are incomplete
-
-        #all_elec_class=classconfig_table.query.filter(type.like('ELECTIVE/%') ).all()
-
-        mycursor.execute("SELECT DISTINCT classname FROM classconfig_table WHERE type LIKE 'ELECTIVE/%' AND total_periods <> allocated ")
-
-        val=mycursor.fetchall()
-
-        all_class=[]
-        all_elec=[]
-
-        print("ELECTIVES containing classes")
-        print(val)
-        for i in val:
-            all_class.append(i[0])
-            
-            print(i[0])
-
-        mycursor.execute("SELECT DISTINCT type,split  FROM classconfig_table WHERE type LIKE 'ELECTIVE/%' AND total_periods <> allocated")
-
-        val=mycursor.fetchall()
-
-        print("Number of Electives")
-        for i in val:
-            all_elec.append([i[0],i[1]])
-            print(i[0],i[1])
-
-        already_day=[]
-
-        mycursor.execute("SELECT DISTINCT dayperiod FROM classconfig_table WHERE type LIKE 'ELECTIVE/%' AND dayperiod <>'@' ")
-
-        day_elec=mycursor.fetchall()
-
-        if(day_elec):
-
-            for day_elec_row in day_elec:
-
-                print("already elective day",day_elec_row)
-
-                if(day_elec_row[0] in already_day):
-
-                    already_day.append(day_elec_row[0])
-
-
-
-
-        for i in all_elec:
-
-            print("generating",i[0])
-            #assuming all subjects having same subject split of particular elective
-
-            split_slash=i[1].split('/')
-
-            li=[]
-
-            print(split_slash)
-            
-            if(len(split_slash)>1):
-                
-                for p in split_slash:
-                        li.append(p.split(','))
-
-                for j in li[1]:
-                        if(j in li[0]):
-                                    li[0].remove(j)
-
-                li=li[0]
-
-                print(li)
-            else:
-
-                li=split_slash[0].split(',')
-
-            print(i[0],":",li) 
-
-            li.sort(reverse=True)
-            for sp in li:
-                #already_day=[]
-                #take random extreme start of day mrng or afternoon
-
-                get_day=day_period.query.get(1)
-                day=int(get_day.day)
-
-                print("max day:",day)
-
-                day_list=['MON','TUE','WED','THU','FRI','SAT','SUN']  
-
-                #while(len(already_day)<=2):
-                #while(len(already_day)<=len(day_list[:day])):
-
-                day_list=day_list[:day]
-
-                random.shuffle(day_list)
-
-                
-                
-                for random_day in day_list:      
-                    #random_day= random.choice()
-
-                    if(random_day in already_day):
-                        continue
-
-                    print("random_day",random_day)
-
-                    already_random_ext=[]
-
-                    update_status=1
-
-                    while(len(already_random_ext)!=2 ):
-                        #0->morning extreme
-                        #1-afternoon extreme
-                        random_ext=random.choice([0,1])
-
-                        if(random_ext  in already_random_ext):
-
-                            continue
-
-                        if(random_ext==0):#morning
-                            #generate strings
-                            start=1
-                            print("morning selected start:",start)
-                        else:#afternoon
-                            start=int(get_day.morning_periods)+1
-                            print("afternoon selected start:",start)
-
-                        #generate strings
-                        period_collection=[]
-
-                        for start_scale in range(start,start+int(sp)):
-
-                            #collect data:
-                            period_collection.append(random_day+"--"+str(start_scale))
-
-
-                        print("period collection:",period_collection)
-
-                        #collect class data and faculty data and check on these periods collection
-
-                        #get_elec_data=classconfig_table.query.filter_by(type=i[0],total_periods!=allocated).all()
-
-
-                        all_fac_class=[]
-
-                        #mycursor.execute("SELECT DISTINCT classname,type FROM classconfig_table WHERE total_periods <> allocated ")
-
-
-                        mycursor.execute("SELECT * FROM classconfig_table WHERE total_periods <> allocated ")
-
-                        get_elec_data=mycursor.fetchall()
-
-                        all_class_ele=[]
-                        all_fac_ele=[]
-
-                        print("list of classes:")
-                        for row in get_elec_data:
-
-                            if(row[2]==i[0]):
-                                print(row[4])
-                                all_class_ele.append(row[4])
-
-                        #mycursor.execute("SELECT DISTINCT faculty,type FROM classconfig_table WHERE total_periods <> allocated ")
-
-                        #get_elec_data=mycursor.fetchall()
-
-                        final_all=[]
-
-                        print("list of faculties:")
-                        for row in get_elec_data:
-
-                            if(row[2]==i[0]):
-                                print(row[3])
-                                all_fac_ele.append(row[3])
-
-                                final_all.append(row)
-
-                        #if all are free at these slots assign them and go for next split
-
-                        #else and period already_random_ext.append(random_ext)
-
-                        all_fac_class=all_fac_ele+all_class_ele
-                        #print("final_all",final_all)
-                        #print("\n\nfinal list:",all_fac_class)
-
-                        for p in final_all:
-                            print(p[0])
-
-                        status=0
-                        print("period_collection",period_collection)
-                        for final in all_fac_class:
-
-                            for period in period_collection:
-
-                                period_split=period.split("--")
-
-                                print("period_split",period_split)
-
-                                mycursor.execute("SELECT `{1}` FROM `{0}` WHERE DAY='{2}';".format(final,period_split[1],period_split[0]))
-
-                                val1=mycursor.fetchall()
-
-                                if(val1[0][0]=="--"):
-                                    print("ok",final,period)
-                                else:
-
-                                    status=1
-                                    print("plz select alternate session of this same day if not tried")
-                                    break
-
-                            if(status==1):#breaking outer forloop control  going to after outer for loop and control goes to down the outer while
-                                already_random_ext.append(random_ext)
-                                break
-
-                                #continue
-
-                        #start update throught respective classes/faculties
-                        if(status==0):
-                            print("control came to update part")
-
-                            
-                            for final in final_all:
-
-                                for period in period_collection:
-
-                                    period_split=period.split("--")
-
-                                    #select class
-                                    mycursor.execute("SELECT `{1}` FROM `{0}` WHERE DAY='{2}';".format(final[4],period_split[1],period_split[0]))
-
-                                    val=mycursor.fetchall()
-
-                                    if(val1[0][0]=="--"):#update it
-                                        #update class
-                                        mycursor.execute("UPDATE `{1}` SET `{0}`='{3}' WHERE Day='{2}';".format(period_split[1],final[4],period_split[0],i[0]))
-                                        mydb.commit()
-
-                                    #select fac
-                                    mycursor.execute("SELECT `{1}` FROM `{0}` WHERE DAY='{2}';".format(final[3],period_split[1],period_split[0]))
-
-                                    val=mycursor.fetchall()
-
-                                    if(val[0][0]=="--"):
-                                    #update faculty remove "--"
-                                        mycursor.execute("UPDATE `{1}` SET `{0}`='{3}' WHERE `Day`='{2}';".format(period_split[1],final[3],period_split[0],final[4]+'/'+final[1]))
-
-                                        mydb.commit()
-                                        faculty=Teacheradd.query.filter_by(name=final[3]).first()
-
-                                        faculty.work_load=faculty.work_load+1
-                                        db.session.commit()                                    
-                                    else:
-                                        mycursor.execute("UPDATE `{1}` SET `{0}`='{3}' WHERE `Day`='{2}';".format(period_split[1],final[3],period_split[0],final[4]+'/'+val[0][0]))
-
-                                        mydb.commit()
-
-                                    #update workload,split,allocated
-
-
-
-                                    data=classconfig_table.query.get(int(final[0]))
-                                    
-                                    data.allocated=data.allocated+1
-                                    db.session.commit()
-
-                                    if(data.dayperiod=="@"):
-                                        data.dayperiod=period
-                                        db.session.commit()
-                                    else:
-                                        data.dayperiod= data.dayperiod +","+period
-                                        db.session.commit()
-
-
-
-                                #update split by appending '/' and scale
-                                scale=int(sp)
-                                if(data.allocated-scale==0):
-                                    #append "/"
-
-                                    data.split=data.split+"/"+str(scale)
-                                    db.session.commit()
-                                else:
-                                    data.split=data.split+","+str(scale)
-                                    db.session.commit()
-
-                                
-            
-                            already_day.append(random_day)
-                            update_status=0
-                            break#while(len(already_day))
-
-                            #update successfull u need to got next split
-
-                            #print(exit)
-                            #exit()
-
-                            #already_random_ext.append(random_ext)        
-                            #break    
-                        else:#control is going to while(len(already_random_ext)!=2)
-
-                            print("session failed {0} day select another extreme of this day",format(period))
-                            #while 
-                            
-                            #go to next split of this elective
-                            #break
-                    #break will further control to next split
-                    #while(len(already_random_ext)==2) end
-
-                    if(update_status==0):#success
-
-                        break #break the loop
-
-                    if(len(already_random_ext)==2 ):
-
-                        #go to next random day
-                        print("day failed") 
-                        already_day.append(random_day)
-                        print("length of already day",len(already_day))
-                        #while                 
-                    
-
-                if(len(already_day)==len(day_list[:day]) and update_status==1):
-
-                    return jsonify({'msg':"{0} does not fitted into point of extreme start(morning or afternoon) of day ".format(i[0])})
-
-
-        #generating theory
-
-
-        mycursor = mydb.cursor(buffered=True)
-        print("")
-        print("")
-        print("")
-        print("")
-        print("theory generating")
-
-        get_class_theory=classconfig_table.query.filter_by(classname=get_data['data'],type="THEORY").all() 
-
-        already_theory_day=[]#on successful updation of single day add day to this of split
-
-        for a in get_class_theory:
-
-
-            if(a.allocated==a.total_periods):
-
-                already_theory_day=[]
-                continue
-                #already fully assigned
-
-            print(a.subject)
-
-            if(a.allocated!=a.total_periods and a.dayperiod!='@'):
-
-                #collect already assigned day
-
-                day_split=a.dayperiod.split(',')
-
-                for day_index in day_split:
-
-                    only_day=day_index.split('--')
-
-                    if(only_day not in already_theory_day):
-
-                        already_theory_day.append(only_day[0])    
-
-
-
-            split_slash=a.split.split('/')
-
-            li=[]
-
-            print("split_slash thoery",split_slash)
-            
-            if(len(split_slash)>1):
-                
-                for p in split_slash:
-                        li.append(p.split(','))
-
-                for j in li[1]:
-                        if(j in li[0]):
-                                    li[0].remove(j)
-
-                li=li[0]
-
-                print(li)
-            else:
-
-                li=split_slash[0].split(',')
-
-            #print(i[0],":",li)
-                
-            #ready start here for one theory subject
-            print(li)
-            li.sort(reverse=True)
-            for sp in li:
-
-
-                #collecting days
-
-                get_day=day_period.query.get(1)
-                day=int(get_day.day)
-
-                print("max day:",day)
-
-                day_list=['MON','TUE','WED','THU','FRI','SAT','SUN']  
-
-                day_list=day_list[:day] 
-
-                random.shuffle(day_list)
-                
-                period_colloction_final=[]
-
-                start1=1
-
-                end1=int(get_day.morning_periods)
-
-                if(int(get_day.morning_periods)+1 < int(get_day.periods)):
-
-                    start2=int(get_day.morning_periods)+1
-
-                    end2=int(get_day.periods)
-                else:
-                    start2=1
-                    end2=int(get_day.periods)
-
-                print("start1,end1,start2,end2",start1,end1,start2,end2)
-
-                period_colloction_final=[]
-
-                for d in day_list:
-                                    
-                    period_collection=[]
-
-                    
-                    if(d in already_theory_day):
-                        continue
-
-                    #if sp is even periods(2,4) should start from 1 3 5 
-                    #if sp is odd(1,3,5) periods should start from 1 3 5
-
-                    for one in range(start1,end2-int(sp)+2):
-
-                        period_collection=[]
-                        for index in range(int(sp)):
-
-                            #print(d,"--",one+index)
-
-                            st=d+'--'+str(int(one+index))
-
-                            period_collection.append(st)
-
-                        print(period_collection)
-
-                        fir_arr=period_collection[0].split('--')
-
-                        sec_arr=period_collection[-1].split('--')
-
-
-                        if( (((int(fir_arr[-1])==start1) or (int(sec_arr[-1])==end1)) or((int(fir_arr[-1])==start2) or (int(sec_arr[-1])==end2))) and ((int(fir_arr[-1])!=end1) and (int(sec_arr[-1])!=start2) ) ):
-
-
-                                period_colloction_final.append(period_collection)
-
-                if(period_colloction_final):
-                    print("period collection_final:",period_colloction_final)
-                else:
-                    flag_overflow=1
-                    print("do it manually no slot found")
-                    break
-                
-                
-                final_collection=[]
-                #got possible slots of theory
-                flag_update=1
-                for one_row in period_colloction_final:
-
-                    for one in one_row:
-
-                        period_split=one.split('--')
-
-                        #select faculty
-
-                        if(int(period_split[1])==int(start1) or int(period_split[1])==int(start2) ):
-                        
-                            mycursor.execute("SELECT `{0}` FROM `{1}` WHERE DAY='{2}';".format(period_split[1],a.faculty,period_split[0]))
-
-                            val=mycursor.fetchall()
-                            print(a.faculty,val[0][0])
-
-                            if(val[0][0]!='--'):
-                                flag_update=0
-                                print("if",a.faculty,val[0][0])
-                                break
-
-                            mycursor.execute("SELECT `{0}` FROM `{1}` WHERE DAY='{2}';".format(period_split[1],a.classname,period_split[0]))
-
-                            cls=mycursor.fetchall()
-                            if(cls[0][0]!='--'):
-                                flag_update=0
-                                print("if",a.classname,cls[0][0])
-                                break 
-
-                        else:
-
-                            before=str(int(period_split[1])-1)
-
-                            mycursor.execute("SELECT `{0}` FROM `{1}` WHERE DAY='{2}';".format(before,a.faculty,period_split[0]))     
-
-                            before=mycursor.fetchall()
-
-                            if(before[0][0]!='--'):
-                                flag_update=0
-                                print("else",a.faculty,before[0][0])
-                                break
-
-            
-
-                            mycursor.execute("SELECT `{0}` FROM `{1}` WHERE DAY='{2}';".format(period_split[1],a.faculty,period_split[0]))
-
-                            fac=mycursor.fetchall()
-                            print(a.faculty,val[0][0])
-
-                            if(fac[0][0]!='--'):
-                                flag_update=0
-                                print(a.faculty,fac[0][0])
-                                break    
-
-                            
-                            mycursor.execute("SELECT `{0}` FROM `{1}` WHERE DAY='{2}';".format(period_split[1],a.classname,period_split[0]))
-
-                            cls=mycursor.fetchall()
-                            if(cls[0][0]!='--'):
-                                flag_update=0
-                                print(a.classname,cls[0][0])
-                                break 
-                                        
-
-                        #all ok that means 
-
-                        final_collection=one_row
-
-                        for u in final_collection:
-                        #start updating 
-
-                            period_split=u.split('--')
-
-                            #faculty update
-
-                            mycursor.execute("UPDATE `{1}` SET `{0}`='{3}' WHERE `Day`='{2}';".format(period_split[1],a.faculty,period_split[0],a.classname+'/'+a.subject))                    
-
-                            mydb.commit()
-                                        
-                            faculty=Teacheradd.query.filter_by(name=a.faculty).first()
-
-                            faculty.work_load+=1
-                            db.session.commit()
-
-                            a.allocated=a.allocated+1
-                            db.session.commit()
-
-                            if(a.dayperiod=="@"):
-                                a.dayperiod=u
-                                db.session.commit()
-                            else:
-                                a.dayperiod= a.dayperiod +","+u
-                                db.session.commit()  
-
-                            #update class                  
-                            mycursor.execute("UPDATE `{1}` SET `{0}`='{3}' WHERE `Day`='{2}';".format(period_split[1],a.classname,period_split[0],a.subject))                    
-
-                            mydb.commit()
-                            flag_update=1
-
-                        break
-                    
-                    #update split by appending '/' and scale
-
-                    if(flag_update==1):
-
-                        if('/' in a.split):
-
-                            a.split=a.split+","+str(sp)
-                            db.session.commit()
-                        else:
-                            a.split=a.split+"/"+str(sp)
-                            db.session.commit()
-
-                        already_theory_day.append(period_split[0])
-                        break
-                    else:
-                        already_theory_day=[]
-
-
-                #break #break outer loop
-
-
-            already_theory_day=[]
-            #deallocate already
-
-
-            print("")
-            print("")
-
-
-
-            #last you have to clear
-
-        #generating SRP
-
-
-        mycursor = mydb.cursor(buffered=True)
-        print("")
-        print("")
-        print("")
-        print("")
-        print("SRP generating")
-
-        get_class_theory=classconfig_table.query.filter_by(classname=get_data['data'],type="PROJECT").all() 
-
-        already_theory_day=[]#on successful updation of single day add day to this of split
-
-        for a in get_class_theory:
-
-
-            if(a.allocated==a.total_periods):
-
-                already_theory_day=[]
-                continue
-                #already fully assigned
-
-            if(a.faculty!="NA"):
-
-                msg+=" ,{0} subject is already been assigned with faculty eiether you remove the faculty or do manually".format(a.subject)
-                continue
-            print(a.subject)
-
-            if(a.allocated!=a.total_periods and a.dayperiod!='@'):
-
-                #collect already assigned day
-
-                day_split=a.dayperiod.split(',')
-
-                print("already half assigned",day_split)
-
-                for day_index in day_split:
-
-                    only_day=day_index.split('--')
-
-                    if(only_day not in already_theory_day):
-
-                        already_theory_day.append(only_day[0])    
-
-
-
-            split_slash=a.split.split('/')
-
-            li=[]
-
-            print("split_slash thoery",split_slash)
-            
-            if(len(split_slash)>1):
-                
-                for p in split_slash:
-                        li.append(p.split(','))
-
-                for j in li[1]:
-                        if(j in li[0]):
-                                    li[0].remove(j)
-
-                li=li[0]
-
-                print(li)
-            else:
-
-                li=split_slash[0].split(',')
-
-            #print(i[0],":",li)
-                
-            #ready start here for one theory subject
-            print(li)
-            li.sort(reverse=True)
-
-            fac_srp_list=[]
-
-
-            for sp in li:
-
-                final_update=0
-                #collecting days
-
-                get_day=day_period.query.get(1)
-                day=int(get_day.day)
-
-                print("max day:",day)
-
-                day_list=['MON','TUE','WED','THU','FRI','SAT','SUN']  
-
-                day_list= day_list[:day]
-
-                random.shuffle(day_list)
-                
-                period_colloction_final=[]
-
-                start1=1
-
-                end1=int(get_day.morning_periods)
-
-                if(int(get_day.morning_periods)+1 < int(get_day.periods)):
-
-                    start2=int(get_day.morning_periods)+1
-
-                    end2=int(get_day.periods)
-                else:
-                    start2=1
-                    end2=int(get_day.periods)
-
-
-                period_colloction_final=[]
-
-                for d in day_list:
-                                    
-                    period_collection=[]
-
-                    
-                    if(d in already_theory_day):
-                        continue
-
-                    #if sp is even periods(2,4) should start from 1 3 5 
-                    #if sp is odd(1,3,5) periods should start from 1 3 5
-
-                    for one in range(start1,end2-int(sp)+2):
-
-                        period_collection=[]
-                        for index in range(int(sp)):
-
-                            #print(d,"--",one+index)
-
-                            st=d+'--'+str(int(one+index))
-
-                            period_collection.append(st)
-
-                        print(period_collection)
-
-                        fir_arr=period_collection[0].split('--')
-
-                        sec_arr=period_collection[-1].split('--')
-
-
-                        if( (((int(fir_arr[-1])==start1) or (int(sec_arr[-1])==end1)) or((int(fir_arr[-1])==start2) or (int(sec_arr[-1])==end2))) and ((int(fir_arr[-1])!=end1) and (int(sec_arr[-1])!=start2) ) ):
-                                period_colloction_final.append(period_collection)
-
-                if(period_colloction_final):
-                    print("period collection_final:",period_colloction_final)
-                else:
-                    flag_overflow=1
-                    print("do it manually no slot found")
-                    break
-                
-                
-                final_collection=[]
-                #got possible slots of theory
-                flag_update=1
-
-                #LOAD RANDOM FACULTY ACCORDING TO THEIR WORKLOADS
-
-                course=a.classname.split("@")
-
-                subject_dept=Subject.query.filter_by(name=a.subject,course=course[0]).first()
-
-                print("subject_dept",subject_dept.dept,subject_dept.id,subject_dept.name)
-
-
-                mycursor.execute("SELECT * from facultyadd WHERE branch='{0}'  ORDER BY work_load ASC ".format(subject_dept.dept))
-
-                
-                dep_fac=mycursor.fetchall()
-
-
-
-                print("faculty SRP count",a.f_count)   
-
-                for dep in dep_fac:
-
-                    print("srp faculty",dep[1])
-
-                    support_fac=Teacheradd.query.filter_by(name=dep[1]).first()
-                    
-                    if(support_fac.exclude==1):
-                        continue
-
-                    mycursor.execute("SELECT total_Periods,allocated FROM classconfig_table WHERE faculty='{0}' AND type='{1}'".format(dep[1],"THEORY"))
-
-                    summ_check=mycursor.fetchall()
-
-                    summ=0
-                    for pr in summ_check:
-
-                        #print("p",p)
-                        #this summm must to be scheduled
-                        summ+=int(pr[0])-int(pr[1])
-
-                    designation_dic={'Professor':'proffesor','Associate Professor':'Assoc_prof','Assistant Professor':'Asst_prof','Assistant Professor(C)':'Asst_prof_c'}
-
-                    mycursor.execute("select `{0}` FROM day_periods WHERE id={1}".format(designation_dic[support_fac.role],1))
-
-                    designation=mycursor.fetchall()
-
-                    #day_period.query.get(1)
-
-                    
-                    if(support_fac.work_load+int(sp)+summ<=int(designation[0][0]) or (support_fac.role=="Assistant Professor(C)") ):
-
-
-                        print(dep[1],support_fac.work_load+int(sp)+summ," is less than his/her workload can procced")
-
-                        #append it 
-
-                        fac_srp_list.append(dep[1])
-
-                    else:
-                        print(dep[1],support_fac.work_load+int(sp)+summ," is greater than his/her workload cannot  procced")
-                        continue
-
-                if(len(fac_srp_list)<a.f_count):
-
-                    print("{0} is not having enough Faculty count".format(a.subject))
-                    break
-
-                    #return jsonify({'msg':"{0} is not having enough Faculty count".format(a.subject)})
-
-                #all fac of length found and make update 
-
-                print(fac_srp_list)
-                for fac in fac_srp_list:
-                    print("faculty name:",fac)
-
-                print("faculty printing completed")
-
-                print(period_colloction_final)
-                for one_row in period_colloction_final:           
-
-                    flag_update=1
-
-                    print("inside for split",one_row)
-
-                    for one in one_row:
-
-                        print("inside period:",one)
-                        period_split=one.split('--')
-
-                        mycursor.execute("SELECT `{0}` FROM `{1}` WHERE DAY='{2}';".format(period_split[1],a.classname,period_split[0]))
-
-                        cls=mycursor.fetchall()
-                        print(cls)
-
-                        if(cls[0][0]!='--'):
-                            flag_update=0
-                            #print("if",a.classname,cls[0][0])
-                            break 
-
-                    if(flag_update==1):
-                        print("free srp slot found",one_row)
-
-                        final_fac_list=[]
-                        for fac in fac_srp_list:
-                            fac_update=1
-                            if(len(final_fac_list)==a.f_count):
-                                break
-                            else:
-                                for one in one_row:
-
-                                    period_split=one.split('--')
-
-                                    if(int(period_split[1])==start1 or int(period_split[1])==start2 ):
-
-                                        mycursor.execute("SELECT `{0}` FROM `{1}` WHERE DAY='{2}';".format(period_split[1],fac,period_split[0]))
-
-                                        cls=mycursor.fetchall()
-
-                                        if(cls[0][0]!='--'):
-                                            fac_update=0
-                                            #print("if",a.classname,cls[0][0])
-                                            break
-                                    else:
-                                        before=str(int(period_split[1])-1)
-
-                                        mycursor.execute("SELECT `{0}` FROM `{1}` WHERE DAY='{2}';".format(before,fac,period_split[0]))
-
-                                        cls=mycursor.fetchall()
-
-                                        if(cls[0][0]!='--'):
-                                            fac_update=0
-                                            #print("if",a.classname,cls[0][0])
-                                            break 
-
-
-                                        mycursor.execute("SELECT `{0}` FROM `{1}` WHERE DAY='{2}';".format(period_split[1],fac,period_split[0]))
-
-                                        cls=mycursor.fetchall()
-
-                                        if(cls[0][0]!='--'):
-                                            fac_update=0
-                                            #print("if",a.classname,cls[0][0])
-                                            break                                                                    
-
-                                if(fac_update==1):
-                                    final_fac_list.append(fac)
-
-                        print("final faculty for srp is",final_fac_list)
-
-                        if(len(final_fac_list)==a.f_count):
-
-                                #update is start here 
-
-                                for one in one_row:
-
-                                    period_split=one.split('--')
-
-                                    #update class                  
-                                    mycursor.execute("UPDATE `{1}` SET `{0}`='{3}' WHERE `Day`='{2}';".format(period_split[1],a.classname,period_split[0],a.subject))                    
-
-                                    mydb.commit()  
-
-
-                                    a.allocated=a.allocated+1
-                                    db.session.commit()
-
-                                    if(a.dayperiod=="@"):
-                                        a.dayperiod=one
-                                        db.session.commit()
-                                    else:
-                                        a.dayperiod= a.dayperiod +","+one
-                                        db.session.commit() 
-
-                                    #update faculty
-                                    for inner in final_fac_list:
-
-                                        mycursor.execute("UPDATE `{1}` SET `{0}`='{3}' WHERE `Day`='{2}';".format(period_split[1],inner,period_split[0],a.classname+'/'+a.subject))                    
-
-                                        mydb.commit()
-
-                                        faculty=Teacheradd.query.filter_by(name=inner).first()
-
-                                        faculty.work_load+=1
-                                        db.session.commit()  
-
-                                        final_update=1
-
-
-                                if(final_update==1): 
-
-                                    if('/' in a.split):
-
-                                        a.split=a.split+","+str(sp)
-                                        db.session.commit()
-                                    else:
-                                        a.split=a.split+"/"+str(sp)
-                                        db.session.commit()
-                                    
-                                    a.faculty=(',').join(final_fac_list)
-                                    db.session.commit()
-
-                                already_theory_day.append(period_split[0])
-                                break                            
-
-                        else:
-
-                            print("faculty count does fitted any free slots")
-
-                   
-
-                        #we will take this and update it
-                        break 
-
-
-            #last you have to clear
-
-
-        mycursor.execute("SELECT * FROM `{0}`;".format(get_data['data']))
-        row=mycursor.fetchall()
-
-        all_data=classconfig_table.query.all()
-
-        get_period=day_period.query.get(1)
-
-        return jsonify( {'data': render_template('classtable.html',all_data=row,periods=get_period.periods),'describe':render_template('classtable_describe.html',classname=get_data['data'],all_data=all_data),'msg':msg}) 
-
-    else:
-
+    if 'loggedin' not in session:
         return redirect(url_for('dashboard'))
+    if session['type'] == 'faculty_type':
+        return redirect(url_for('faculty_table'))
+
+    get_data = request.get_json()
+    classname = get_data['data']
+
+    cfg = day_period.query.get(1)
+    if not cfg:
+        return jsonify({'data': '', 'describe': '', 'msg': 'Configure Days/Periods first'})
+
+    num_days    = int(cfg.day)
+    num_periods = int(cfg.periods)
+    morning_end = int(cfg.morning_periods)
+    DAYS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'][:num_days]
+    cur  = mydb.cursor()
+
+    # â”€â”€ In-memory grids: grids[table][day][period_int] = cell_value â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    grids = {}
+
+    def _load_grid(name):
+        g = {d: {p: '--' for p in range(1, num_periods + 1)} for d in DAYS}
+        try:
+            cur.execute('SELECT * FROM `{0}`'.format(name))
+            for row in cur.fetchall():
+                day = row[0]
+                if day in g:
+                    for col, val in enumerate(row[1:num_periods + 1], start=1):
+                        g[day][col] = val if val else '--'
+        except Exception:
+            pass
+        return g
+
+    def grid(name):
+        if name not in grids:
+            grids[name] = _load_grid(name)
+        return grids[name]
+
+    def is_free(tables, day, periods):
+        """True when every (table, day, period) cell is '--'."""
+        return all(grid(t).get(day, {}).get(p, '--') == '--'
+                   for t in tables for p in periods)
+
+    def write_cell(table, day, period, value):
+        try:
+            cur.execute("UPDATE `{0}` SET `{1}`='{2}' WHERE Day='{3}'".format(
+                table, period, value, day))
+            mydb.commit()
+        except Exception as e:
+            print('write_cell error', table, day, period, e)
+
+    def place(tables, day, periods, value):
+        """Update in-memory grids and persist to DB."""
+        for t in tables:
+            for p in periods:
+                grid(t)[day][p] = value
+                write_cell(t, day, p, value)
+
+    def find_slot(tables, split_size, avoid_days=None):
+        """
+        Return (day, [p, p+1, ...]) for the first clash-free consecutive block.
+        Prefers blocks fully within morning or fully within afternoon.
+        Returns None if no slot exists.
+        """
+        avoid = set(avoid_days or [])
+        days  = [d for d in DAYS if d not in avoid]
+        random.shuffle(days)
+        aft_start = morning_end + 1
+
+        aligned, fallback = [], []
+        for day in days:
+            for start in range(1, num_periods - split_size + 2):
+                periods = list(range(start, start + split_size))
+                in_m = periods[-1] <= morning_end
+                in_a = periods[0] >= aft_start
+                (aligned if (in_m or in_a) else fallback).append((day, periods))
+
+        for day, periods in aligned + fallback:
+            if is_free(tables, day, periods):
+                return day, periods
+        return None
+
+    def rem_splits(split_str):
+        """Parse the split field and return list of int block sizes still to place.
+        Largest blocks first (easier to place early when the grid is emptier)."""
+        parts = split_str.split('/')
+        todo  = [int(x) for x in parts[0].split(',') if x.strip().isdigit()]
+        if len(parts) > 1:
+            done = [int(x) for x in parts[1].split(',') if x.strip().isdigit()]
+            for d in done:
+                if d in todo:
+                    todo.remove(d)
+        return sorted(todo, reverse=True)
+
+    def tick_split(row_obj, sp):
+        """Mark one placed split-block in the row's split field."""
+        row_obj.split = (row_obj.split + ',' + str(sp)
+                         if '/' in row_obj.split
+                         else row_obj.split + '/' + str(sp))
+
+    def add_dayperiod(row_obj, day, start_period):
+        entry = '{0}--{1}'.format(day, start_period)
+        row_obj.dayperiod = (entry if row_obj.dayperiod == '@'
+                             else row_obj.dayperiod + ',' + entry)
+
+    def cap_ok(fname, extra):
+        """Return True if assigning *extra* more periods to faculty stays within cap."""
+        fac = Teacheradd.query.filter_by(name=fname).first()
+        if not fac or fac.role == 'Assistant Professor(C)':
+            return True
+        col = {'Professor': 'proffesor',
+               'Associate Professor': 'Assoc_prof',
+               'Assistant Professor': 'Asst_prof'}.get(fac.role)
+        if not col:
+            return True
+        try:
+            cur.execute("SELECT `{0}` FROM day_periods WHERE id=1".format(col))
+            cap = int(cur.fetchall()[0][0])
+            return fac.work_load + extra <= cap
+        except Exception:
+            return True
+
+    def inc_workload(fname, amount):
+        fac = Teacheradd.query.filter_by(name=fname).first()
+        if fac:
+            fac.work_load += amount
+            db.session.commit()
+
+    def evict_and_place(tables, split_size, avoid_days=None):
+        """
+        Fallback when no free slot exists.  Scans the class timetable for an
+        already-placed subject whose block of exactly `split_size` consecutive
+        periods can be moved to another free location, freeing the original slot
+        for the new subject.
+
+        Only commits the move when the evictee can be re-placed; otherwise the
+        in-memory grids are restored and the next candidate is tried.
+        Returns (day, [periods]) on success, None if truly impossible.
+        """
+        avoid = set(avoid_days or [])
+        aft_start = morning_end + 1
+
+        # Build candidate blocks in the same priority order as find_slot
+        aligned, any_blk = [], []
+        for day in [d for d in DAYS if d not in avoid]:
+            for start in range(1, num_periods - split_size + 2):
+                blk = list(range(start, start + split_size))
+                in_m = blk[-1] <= morning_end
+                in_a = blk[0] >= aft_start
+                (aligned if (in_m or in_a) else any_blk).append((day, blk))
+
+        for day, blk in aligned + any_blk:
+            # Every cell in the block must carry the SAME subject name
+            day_grid = grid(classname).get(day, {})
+            vals = {day_grid.get(p, '--') for p in blk}
+            if '--' in vals or len(vals) != 1:
+                continue
+            evictee = vals.pop()
+
+            # Must be a COMPLETE block — not a partial slice of a longer allocation
+            prev_val = day_grid.get(blk[0] - 1, '--') if blk[0] > 1 else '--'
+            next_val = day_grid.get(blk[-1] + 1, '--') if blk[-1] < num_periods else '--'
+            if prev_val == evictee or next_val == evictee:
+                continue
+
+            evictee_row = classconfig_table.query.filter_by(
+                classname=classname, subject=evictee).first()
+            if not evictee_row:
+                continue
+
+            e_fac = ([f.strip() for f in evictee_row.faculty.split(',')
+                      if f.strip() and evictee_row.faculty != 'NA']
+                     if evictee_row.faculty else [])
+            e_labs = ([l.strip() for l in evictee_row.lab.split(',') if l.strip()]
+                      if evictee_row.type == 'LAB' else [])
+            e_all = [classname] + e_labs + e_fac
+
+            # Snapshot current values then temporarily blank them in memory
+            saved = {t: {p: grid(t).get(day, {}).get(p, '--') for p in blk}
+                     for t in e_all}
+            for t in e_all:
+                for p in blk:
+                    grid(t)[day][p] = '--'
+
+            # Check whether the new subject fits in this now-vacated slot
+            if is_free(tables, day, blk):
+                # Try to re-home the evictee (must not reuse the day we just freed)
+                e_slot = find_slot(e_all, split_size,
+                                   avoid_days=list(avoid) + [day])
+                if e_slot:
+                    e_day, e_blk = e_slot
+                    # Persist the eviction to DB
+                    for t in e_all:
+                        for p in blk:
+                            write_cell(t, day, p, '--')
+                    # Write evictee to its new slot
+                    place([classname] + e_labs, e_day, e_blk, evictee)
+                    place(e_fac, e_day, e_blk, classname + '/' + evictee)
+                    # Patch evictee's dayperiod tracking
+                    old_dp = '{0}--{1}'.format(day, blk[0])
+                    new_dp = '{0}--{1}'.format(e_day, e_blk[0])
+                    if evictee_row.dayperiod:
+                        evictee_row.dayperiod = ','.join(
+                            new_dp if seg == old_dp else seg
+                            for seg in evictee_row.dayperiod.split(','))
+                    db.session.commit()
+                    return day, blk
+
+            # This eviction didn't work — restore in-memory state
+            for t in e_all:
+                for p in blk:
+                    grid(t)[day][p] = saved[t][p]
+
+        return None
+
+    def find_slot_or_evict(tables, split_size, avoid_days=None):
+        """Try a free slot first; fall back to displacing an existing allocation."""
+        slot = find_slot(tables, split_size, avoid_days)
+        return slot if slot is not None else evict_and_place(tables, split_size, avoid_days)
+
+    msgs = []
+
+    # â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    # PHASE 1 â€” LAB  (most constrained: consecutive periods + lab room + multiple faculty)
+    # â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    for row in classconfig_table.query.filter_by(classname=classname, type='LAB').all():
+        if row.allocated >= row.total_periods:
+            continue
+
+        # Head faculty = faculty of the matching THEORY subject (same subject minus " LAB")
+        head = None
+        base_name = row.subject.replace(' LAB', '').strip()
+        th = classconfig_table.query.filter_by(
+            classname=classname, subject=base_name, type='THEORY').first()
+        if th and th.faculty and th.faculty != 'NA':
+            cand = th.faculty.split(',')[0].strip()
+            smallest = rem_splits(row.split)
+            needed = smallest[-1] if smallest else 1
+            if cap_ok(cand, needed):
+                head = cand
+
+        # Build supporting faculty list (up to f_count total)
+        fac_list = [head] if head else []
+        if len(fac_list) < row.f_count:
+            course = classname.split('@')[0]
+            dsub   = Subject.query.filter_by(name=row.subject, course=course).first()
+            dept   = dsub.dept if dsub else None
+            if dept:
+                cur.execute(
+                    "SELECT * FROM facultyadd WHERE branch='{0}' ORDER BY work_load ASC".format(dept))
+                for df in cur.fetchall():
+                    if len(fac_list) >= row.f_count:
+                        break
+                    fname = df[1]
+                    if fname == head:
+                        continue
+                    fo = Teacheradd.query.filter_by(name=fname).first()
+                    if fo and not fo.exclude and cap_ok(fname, 1):
+                        fac_list.append(fname)
+
+        if not fac_list:
+            msgs.append('{0}: no available faculty for LAB'.format(row.subject))
+            continue
+
+        labs = [l.strip() for l in row.lab.split(',') if l.strip()]
+        resources = [classname] + labs + fac_list
+        used_days = []
+
+        for sp in rem_splits(row.split):
+            slot = find_slot_or_evict(resources, sp, avoid_days=used_days)
+            if slot is None:
+                msgs.append('{0}: no slot found even after rescheduling (block={1})'.format(
+                    row.subject, sp))
+                break
+            day, periods = slot
+            place([classname] + labs, day, periods, row.subject)
+            place(fac_list, day, periods, classname + '/' + row.subject)
+            for f in fac_list:
+                inc_workload(f, sp)
+            row.allocated += sp
+            add_dayperiod(row, day, periods[0])
+            tick_split(row, sp)
+            db.session.commit()
+            used_days.append(day)
+
+        row.faculty = ','.join(fac_list)
+        db.session.commit()
+
+    # â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    # PHASE 2 â€” ELECTIVE  (shared slot across multiple classes)
+    # â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    cur.execute("SELECT DISTINCT type FROM classconfig_table "
+                "WHERE type LIKE 'ELECTIVE/%' AND total_periods != allocated")
+    for (elec_type,) in list(cur.fetchall()):
+        rows = classconfig_table.query.filter(
+            classconfig_table.type == elec_type,
+            classconfig_table.total_periods != classconfig_table.allocated
+        ).all()
+        if not rows:
+            continue
+
+        # All classes + all faculty for this elective group must share the same slot
+        all_res = list({r.classname for r in rows})
+        for r in rows:
+            if r.faculty and r.faculty != 'NA':
+                all_res.extend(f.strip() for f in r.faculty.split(',') if f.strip())
+        all_res = list(set(all_res))
+
+        used_days = []
+        for sp in rem_splits(rows[0].split):
+            slot = find_slot(all_res, sp, avoid_days=used_days)
+            if slot is None:
+                msgs.append('{0}: no free shared slot (block={1})'.format(elec_type, sp))
+                break
+            day, periods = slot
+            for r in rows:
+                place([r.classname], day, periods, elec_type)
+                fac = ([f.strip() for f in r.faculty.split(',')
+                        if f.strip() and r.faculty != 'NA']
+                       if r.faculty else [])
+                place(fac, day, periods, r.classname + '/' + r.subject)
+                for f in fac:
+                    inc_workload(f, sp)
+                r.allocated += sp
+                add_dayperiod(r, day, periods[0])
+                tick_split(r, sp)
+                db.session.commit()
+            used_days.append(day)
+
+    # â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    # PHASE 3 â€” THEORY
+    # â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    for row in classconfig_table.query.filter_by(classname=classname, type='THEORY').all():
+        if row.allocated >= row.total_periods:
+            continue
+        fac_list = ([f.strip() for f in row.faculty.split(',')
+                     if f.strip() and row.faculty != 'NA']
+                    if row.faculty else [])
+        if not fac_list:
+            msgs.append('{0}: no faculty assigned'.format(row.subject))
+            continue
+
+        resources = [classname] + fac_list
+
+        for sp in rem_splits(row.split):
+            slot = find_slot_or_evict(resources, sp)
+            if slot is None:
+                msgs.append('{0}: no slot found even after rescheduling (block={1})'.format(
+                    row.subject, sp))
+                break
+            day, periods = slot
+            place([classname], day, periods, row.subject)
+            place(fac_list, day, periods, classname + '/' + row.subject)
+            for f in fac_list:
+                inc_workload(f, sp)
+            row.allocated += sp
+            add_dayperiod(row, day, periods[0])
+            tick_split(row, sp)
+            db.session.commit()
 
 
-    #return jsonify({'data':"method passed"})
+    # â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    # PHASE 4 â€” PROJECT
+    # â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    for row in classconfig_table.query.filter_by(classname=classname, type='PROJECT').all():
+        if row.allocated >= row.total_periods:
+            continue
+
+        fac_list = ([f.strip() for f in row.faculty.split(',')
+                     if f.strip() and row.faculty != 'NA']
+                    if row.faculty else [])
+
+        # Auto-assign faculty from department if none configured
+        if not fac_list:
+            course = classname.split('@')[0]
+            dsub   = Subject.query.filter_by(name=row.subject, course=course).first()
+            dept   = dsub.dept if dsub else None
+            if dept:
+                cur.execute(
+                    "SELECT * FROM facultyadd WHERE branch='{0}' "
+                    "ORDER BY work_load ASC".format(dept))
+                for df in cur.fetchall():
+                    if len(fac_list) >= row.f_count:
+                        break
+                    fo = Teacheradd.query.filter_by(name=df[1]).first()
+                    if fo and not fo.exclude and cap_ok(df[1], 1):
+                        fac_list.append(df[1])
+
+        if not fac_list:
+            msgs.append('{0}: no available faculty for PROJECT'.format(row.subject))
+            continue
+
+        resources = [classname] + fac_list
+        used_days = []
+        for sp in rem_splits(row.split):
+            slot = find_slot_or_evict(resources, sp, avoid_days=used_days)
+            if slot is None:
+                msgs.append('{0}: no slot found even after rescheduling (block={1})'.format(
+                    row.subject, sp))
+                break
+            day, periods = slot
+            place([classname], day, periods, row.subject)
+            place(fac_list, day, periods, classname + '/' + row.subject)
+            for f in fac_list:
+                inc_workload(f, sp)
+            row.allocated += sp
+            add_dayperiod(row, day, periods[0])
+            tick_split(row, sp)
+            db.session.commit()
+            used_days.append(day)
+
+        row.faculty = ','.join(fac_list)
+        db.session.commit()
+
+    # â”€â”€ Build response â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    cur2 = mydb.cursor()
+    try:
+        cur2.execute('SELECT * FROM `{0}`'.format(classname))
+        tt_rows = cur2.fetchall()
+    except Exception:
+        tt_rows = []
+
+    all_data = classconfig_table.query.all()
+    get_period = day_period.query.get(1)
+
+    return jsonify({
+        'data':     render_template('classtable.html',
+                                    all_data=tt_rows,
+                                    periods=get_period.periods),
+        'describe': render_template('classtable_describe.html',
+                                    classname=classname,
+                                    all_data=all_data),
+        'msg':      '; '.join(msgs) if msgs else ''
+    })
+
 
 @app.route('/excel_report', methods = ['GET', 'POST'])
 @app.route('/excel_report')
@@ -2195,7 +934,10 @@ def excel_report():
             print(file_path)
             if os.path.exists(file_path):
                 print("Hey yoh!")
-                return send_file(file_path, as_attachment=True, attachment_filename=file)
+                try:
+                    return send_file(file_path, as_attachment=True, download_name=file)
+                except TypeError:
+                    return send_file(file_path, as_attachment=True, attachment_filename=file)
             else:
                 print("excel report fail")
                 return jsonify({'msg':"excel report fail"})
@@ -2207,179 +949,144 @@ def excel_report():
 
 def excel_method():
 
-    if 'loggedin' in session:
+    if 'loggedin' not in session:
+        return None
 
-        mycursor = mydb.cursor(buffered=True)  
-        wb = Workbook()
+    from openpyxl.utils import get_column_letter
 
-        all_branch=Teacheradd.query.with_entities(Teacheradd.branch).distinct()
+    # â”€â”€ Fills â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    FILL_TITLE    = PatternFill("solid", fgColor="1F4E79")  # dark navy  â€“ block title
+    FILL_HEADER   = PatternFill("solid", fgColor="2E75B6")  # blue       â€“ column headers
+    FILL_DAY      = PatternFill("solid", fgColor="BDD7EE")  # light blue â€“ day names
+    FILL_FREE     = PatternFill("solid", fgColor="F2F2F2")  # light grey â€“ free slot (--)
+    FILL_OCCUPIED = PatternFill("solid", fgColor="E2EFDA")  # light greenâ€“ occupied slot
 
-        count=0
-        for branch in all_branch:
+    # â”€â”€ Borders â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    _thin = Side(style='thin')
+    _med  = Side(style='medium')
+    BORDER_ALL   = Border(left=_thin, right=_thin, top=_thin, bottom=_thin)
+    BORDER_TITLE = Border(left=_med,  right=_med,  top=_med,  bottom=_med)
 
-            print("Branch Faculty:",branch.branch)
+    # â”€â”€ Alignments â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    ALIGN_C = Alignment(horizontal='center', vertical='center', wrap_text=True)
 
-            ws = wb.create_sheet("Sheet_A",count)
+    # â”€â”€ Fonts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    FONT_TITLE  = Font(size=13, bold=True, color="FFFFFF")
+    FONT_HEADER = Font(size=11, bold=True, color="FFFFFF")
+    FONT_DAY    = Font(size=11, bold=True, color="1F4E79")
+    FONT_DATA   = Font(size=10)
 
-            ws.title = branch.branch
-            row=col=1
+    def _style_title(cell):
+        cell.fill = FILL_TITLE; cell.font = FONT_TITLE
+        cell.border = BORDER_TITLE; cell.alignment = ALIGN_C
 
-            all_teachers=Teacheradd.query.filter_by(branch=branch.branch).all()
+    def _style_header(cell):
+        cell.fill = FILL_HEADER; cell.font = FONT_HEADER
+        cell.border = BORDER_ALL; cell.alignment = ALIGN_C
 
-            for p in all_teachers:
-                print(p.name)
+    def _style_day(cell):
+        cell.fill = FILL_DAY; cell.font = FONT_DAY
+        cell.border = BORDER_ALL; cell.alignment = ALIGN_C
 
-            for teacher in all_teachers:
+    def _style_data(cell, value):
+        cell.fill = FILL_FREE if str(value).strip() == '--' else FILL_OCCUPIED
+        cell.font = FONT_DATA; cell.border = BORDER_ALL; cell.alignment = ALIGN_C
 
-                if(show_all_tables((teacher.name).lower())):
+    def _write_block(ws, row, label, cursor_rows, col_names):
+        """Write one timetable block (title + header + data) and return next free row."""
+        col_count = len(col_names)
 
-                    print("printing {0} table",format(teacher.name))
+        # Title row
+        ws.merge_cells(start_row=row, start_column=1,
+                       end_row=row, end_column=col_count)
+        _style_title(ws.cell(row=row, column=1, value=label))
+        ws.row_dimensions[row].height = 22
+        row += 1
 
-                    #print name of the faculty
+        # Header row
+        for c, name in enumerate(col_names, start=1):
+            _style_header(ws.cell(row=row, column=c, value=name))
+            ws.column_dimensions[get_column_letter(c)].width = 22
+        ws.row_dimensions[row].height = 20
+        row += 1
 
-                    ws.merge_cells(start_row=row, start_column=col, end_row=row, end_column=col+5)
+        # Data rows
+        for data_row in cursor_rows:
+            for c, val in enumerate(data_row, start=1):
+                cell = ws.cell(row=row, column=c, value=val)
+                if c == 1:
+                    _style_day(cell)
+                else:
+                    _style_data(cell, val)
+            ws.row_dimensions[row].height = 30
+            row += 1
 
-                    ws.cell(row=row,column=col,value="Faculty Name:"+teacher.name).font = Font(size = 14, bold = True)
+        return row + 2  # blank gap between blocks
 
-                    thin_border = Border(outline=Side(style='thin'))
-                    ws.cell(row=row,column=col).border=thin_border
+    mycursor = mydb.cursor(buffered=True)
+    wb = Workbook()
+    # Remove the default blank sheet openpyxl creates
+    default_sheet = wb.active
+    count = 0
 
-                    ws.row_dimensions[row].height = 20
-                    #st=chr(col+64)
-                    #print("ascii",st)
-                    #ws.column_dimensions[st].width = 30.0
+    # â”€â”€ Faculty sheets (one sheet per branch) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    all_branch = Teacheradd.query.with_entities(Teacheradd.branch).distinct()
+    for branch in all_branch:
+        ws = wb.create_sheet(title=branch.branch[:31], index=count)
+        row = 1
 
-                    row+=1
+        for teacher in Teacheradd.query.filter_by(branch=branch.branch).all():
+            if not show_all_tables(teacher.name):
+                continue
+            try:
+                mycursor.execute("SHOW COLUMNS FROM `{0}`".format(teacher.name))
+                col_names = [r[0] for r in mycursor.fetchall()]
+                mycursor.execute("SELECT * FROM `{0}`".format(teacher.name))
+                data_rows = mycursor.fetchall()
+            except Exception as e:
+                print("Excel faculty error:", e)
+                row += 2
+                continue
 
-                    #start printing faculty table
-                    #cols=fields,Type Null Key Default Extra
+            row = _write_block(ws, row,
+                               "Faculty: " + teacher.name,
+                               data_rows, col_names)
+        count += 1
 
+    # â”€â”€ Class/Course sheets (one sheet per course) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    all_courses = Courseadd.query.with_entities(Courseadd.name).distinct()
+    for course in all_courses:
+        ws = wb.create_sheet(title=course.name[:31], index=count)
+        row = 1
 
-                    try:
+        mycursor.execute("SHOW TABLES;")
+        all_classes = [r[0] for r in mycursor.fetchall()
+                       if course.name.lower() in r[0].lower() and '@' in r[0]]
 
-                        mycursor.execute("SHOW COLUMNS FROM  `{0}`".format(teacher.name))
-
-                    except:
-
-                        print("An exception occurred")
-                        row+=2
-                        col=1 
-                        continue
-
-                    val=mycursor.fetchall()
-
-                    for j in val:
-                        ws.cell(row=row,column=col,value=j[0]).font = Font(size = 12, bold = True)
-                        
-                        ws.column_dimensions[chr(col+64)].width = 20.0
-                        col+=1
-                    ws.row_dimensions[row].height = 50
-
-
-                    row+=1
-                    col=1
-                    index=0
-                    mycursor.execute("SELECT * FROM `{0}`".format(teacher.name))
-
-                    val=mycursor.fetchall()
-
-                    for j in val:
-
-                        print("row:",j)
-                        col=1
-                        for r in j:
-                            #print("q:",q)
-
-                            #print(r[q])
-
-                            ws.cell(row=row,column=col,value=r)
-                            ws.column_dimensions[chr(col+64)].width = 20.0
-                            col+=1
-
-                        ws.row_dimensions[row].height = 50 
-                        row+=1  
-                row+=2
-                col=1      
-
-            count+=1
-
-        # course wise timetable report
-        all_courses = Courseadd.query.with_entities(Courseadd.name).distinct()
-
-        count = count
-        
-        for course in all_courses:
-            print("course:", course, course.name)
-
-            ws = wb.create_sheet("Sheet_A",count)
-            ws.title = course.name
-            row=col=1
-
-            # mycursor.execute("SHOW TABLES FROM `jntuk1` WHERE Tables_in_jntuk1 LIKE `{0}`;".format(course.name+'%'))
-            mycursor.execute("SHOW TABLES;")
-            result = mycursor.fetchall()
-
-            all_classes = []
-            for val in result:
-                if str(course.name).lower() in val[0]:
-                    all_classes.append(val[0])
-
-            print(all_classes)
-
-            for cl in all_classes:
-                ws.merge_cells(start_row=row, start_column=col, end_row=row, end_column=col+5)
-                ws.cell(row=row,column=col,value="class Name:"+cl).font = Font(size = 14, bold = True)
-                thin_border = Border(outline=Side(style='thin'))
-                ws.cell(row=row,column=col).border=thin_border
-                ws.row_dimensions[row].height = 20           
-
-                row+=1
-    
-                try:
-                    mycursor.execute("SHOW COLUMNS FROM  `{0}`".format(cl))
-                except:
-                    print("An exception occurred")
-                    row+=2
-                    col=1 
-                    continue
-
-                val=mycursor.fetchall()
-                for j in val:
-                    ws.cell(row=row,column=col,value=j[0]).font = Font(size = 12, bold = True)
-                    ws.column_dimensions[chr(col+64)].width = 20.0
-                    col+=1
-                ws.row_dimensions[row].height = 50
-
-                row+=1
-                col=1
-                index=0
+        for cl in all_classes:
+            try:
+                mycursor.execute("SHOW COLUMNS FROM `{0}`".format(cl))
+                col_names = [r[0] for r in mycursor.fetchall()]
                 mycursor.execute("SELECT * FROM `{0}`".format(cl))
-                val=mycursor.fetchall()
+                data_rows = mycursor.fetchall()
+            except Exception as e:
+                print("Excel class error:", e)
+                row += 2
+                continue
 
-                for j in val:
+            row = _write_block(ws, row, "Class: " + cl, data_rows, col_names)
 
-                    print("row:",j)
-                    col=1
-                    for r in j:
-                        ws.cell(row=row,column=col,value=r)
-                        ws.column_dimensions[chr(col+64)].width = 20.0
-                        col+=1
+        count += 1
 
-                    ws.row_dimensions[row].height = 50 
-                    row+=1
-                row+=2
-                col=1   
-            count+=1          
+    # Remove the original default blank sheet now that real sheets exist
+    if default_sheet.title in wb.sheetnames and len(wb.sheetnames) > 1:
+        del wb[default_sheet.title]
 
-        file=datetime.datetime.now().strftime("Timetable-reports%Y%m%d%H%M%S.xltx")
-        print('file', file)
-        wb.save(file)
-        wb.close()
-
-        time.sleep(1.4)
-        return file
-    else:
-        return redirect(url_for('dashboard'))
+    file = datetime.datetime.now().strftime("Timetable-Report-%Y%m%d%H%M%S.xlsx")
+    file_path = os.path.join(os.getcwd(), file)
+    wb.save(file_path)
+    wb.close()
+    return file
 
     
 @app.route('/delete_all', methods = ['GET', 'POST'])
@@ -4503,6 +3210,10 @@ def classwisetimetable():
 
         get_day_period=day_period.query.get(1)
 
+        if not get_day_period:
+            get_day_period = day_period(6, 7, 14, 14, 16, 16, 4)
+            db.session.add(get_day_period)
+            db.session.commit()
 
         days=get_day_period.day
         periods=get_day_period.periods
@@ -4645,7 +3356,7 @@ def send():
             #print(request.get_json())
             jsondata = request.get_json()
 
-            flag=show_all_tables((jsondata['table_name']).lower())
+            flag=show_all_tables(jsondata['table_name'])
 
             get_day_period=day_period.query.get(1)
             
@@ -4745,16 +3456,20 @@ def send():
 
                                 mycursor.execute("SELECT {1} FROM `{0}` WHERE id=1".format("day_periods",designation_dic[designation]))
 
-                                val=mycursor.fetchall()
+                                workload_val=mycursor.fetchall()
 
-                                print("designation",val[0][0])
+                                print("designation",workload_val[0][0])
 
                                 print(get_fac.work_load+int(jsondata['period']))
 
-                                if( (get_fac.work_load+int(jsondata['period'])> val[0][0] ) and (designation=="Professor" or designation=="Associate Professor" or designation=="Assistant Professor")):
+                                if( (get_fac.work_load+int(jsondata['period'])> workload_val[0][0] ) and (designation=="Professor" or designation=="Associate Professor" or designation=="Assistant Professor")):
 
-                                    return jsonify({'distinct':"{0} is exceeding his/her maximum work_limit periods".format(jsondata['faculty'])})                
-                    
+                                    return jsonify({'distinct':"{0} is exceeding his/her maximum work_limit periods".format(jsondata['faculty'])})
+
+                            # Re-check uniqueness just before insert to prevent race condition from rapid double-submit
+                            if classconfig_table.query.filter_by(classname=jsondata['table_name'],subject=jsondata['subject']).first():
+                                return jsonify({'distinct':"subjects should be unique under single class"})
+
                             add=classconfig_table(jsondata['subject'],jsondata['type'],
                             jsondata['faculty'],jsondata['table_name'],"NA",jsondata['period'],1,0,"@",jsondata['split_p'])
 
@@ -6352,4 +5067,4 @@ def labconfig():
         return redirect(url_for('dashboard'))
     
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)

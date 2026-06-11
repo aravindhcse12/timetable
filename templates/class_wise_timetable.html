@@ -242,23 +242,19 @@ $(document ).ready(function() {
         
 
     $('#get_excel').click(function(){
+        var btn = $(this);
+        btn.prop('disabled', true).text('Generating…');
+        $('#spinner').show();
 
-        alert("excel button");
+        // Direct navigation triggers the Content-Disposition: attachment response,
+        // which makes the browser download the file without leaving the page.
+        window.location.href = '/excel_report';
 
-
-        $.ajax({
-            url: '/excel_report',
-            type: "POST",
-            //data:JSON.stringify(data),
-            //contentType: "application/json",
-            success: function(resp){
-                //window.location.reload(true);
-                //alert(resp.msg);
-
-            },
-            error: function(jqXHR, textStatus, errorThrown) {
-                alert(textStatus);}
-            });
+        // Re-enable the button after a few seconds (download starts in background).
+        setTimeout(function(){
+            btn.prop('disabled', false).text('Export to Excel');
+            $('#spinner').hide();
+        }, 4000);
     });
 
 
@@ -297,8 +293,6 @@ $(document ).ready(function() {
             var json_config= JSON.parse('{{ all_classconfig | tojson | safe }}');
 
             var list=json_config.length;
-
-                alert("success");
 
                 var text= $('#id_theory').val();
 
@@ -481,7 +475,6 @@ $(document ).ready(function() {
                 //alert("add3");
 
                 var text= $('#id_spl').val();
-                alert(text);
                 const arr=text.split("--");
 
 
@@ -673,16 +666,16 @@ width:100%;
 </style>
 <script>
 $(document).ready(function(){
-$("p").hide();
+$("#help_content").hide();
 $("#help").click(function(){
-$("p").toggle();
+$("#help_content").toggle();
 });
 });
 </script>
 <form id="TForm" method="post" novalidate>
 
 
-<h2>Timetable - Class-wise</h2>
+<h2>Class Schedule</h2>
 
 {% with messages = get_flashed_messages() %}
  
@@ -713,39 +706,75 @@ $("p").toggle();
 style="background-color:#1A6DC3;color:black; height:fit-content">
 <div class="jumbotron" style="margin:30px">
 <button id="help" type="button" class="btn btn-info">Help</button>
-    <br><br>
+<div id="help_content">
+    <br>
 
-    <p style="font-size:16px">Select Class </p>
-    <p style="font-size:16px">The class configuration will get loaded in the dropdown</p>
-
+    <p style="font-size:16px"><b><u>How to use the Class-wise Timetable Page</u></b></p>
+    <p class="text-justify" style="font-size:16px">
+        This page lets you view, generate, and manage timetables for each class/section.
+        Follow the steps below to get started:
+    </p>
+    <ol style="font-size:16px; line-height:2;">
+        <li><b>Select a Class</b> from the dropdown at the top. The timetable grid and the subject configuration table for that class will load automatically.</li>
+        <li><b>Configure subjects first</b> (if not done already) by going to the <b>Class Configuration</b> page. Each subject must be configured with faculty, periods, and split before a timetable can be generated.</li>
+        <li>Use <b>Auto Generate</b> to let the system schedule all remaining subjects automatically, or use <b>Add</b> to place individual subjects manually.</li>
+        <li>Use <b>Delete</b> or <b>Delete All</b> to clear specific or all entries before regenerating.</li>
+    </ol>
 
     <p style="font-size:16px"><b><u>Export to Excel Button</u></b></p>
+    <p class="text-justify" style="font-size:16px">
+        Exports the complete timetable for <b>all classes and all faculty</b> into a formatted Excel file (.xlsx).
+        Each department's faculty and each course's classes are placed on separate sheets.
+        Click the button and wait — the file will download automatically once it is ready.
+    </p>
 
-    <p class="text-justify" style="font-size:16px">Export to Excel button when clicked will generate an excel file (for all classes). Please wait till the file get generated.</p>
-    
-   
-    
     <p style="font-size:16px"><b><u>Auto Generate Button</u></b></p>
-    <p class="text-justify" style="font-size:16px">Click on Auto Generate button to automatically generate the time table for the currently selected class
-    You can manually allocate some periods to teachers and can generate rest of the time table by Auto Generate.
-    Please wait till the processing gets over.</p>
+    <p class="text-justify" style="font-size:16px">
+        Automatically schedules all <b>unallocated subjects</b> for the currently selected class based on the Class Configuration settings.
+        The system places subjects in this order: <b>Labs → Electives → Theory → Projects</b>, choosing free slots that respect faculty workload limits and lab room availability.
+        <br><br>
+        <b>Tips:</b>
+        <ul style="font-size:16px; line-height:1.8;">
+            <li>You can manually add some periods first and then click Auto Generate to fill only the remaining ones.</li>
+            <li>If a subject is not getting scheduled, check that its faculty is correctly assigned in Class Configuration and that the faculty is not over their workload cap.</li>
+            <li>Wait until the timetable reloads before making further changes — generation may take a few seconds.</li>
+        </ul>
+    </p>
 
-
-
-     <p style="font-size:16px"><b><u>Add Button</u></b></p>
-     <p class="text-justify" style="font-size:16px">Select the period from the dropdown to fill the periods with selected configuration and click on Add button.
-      The selected period will be allocated with the selected class configration(if available/free). </p>
-
+    <p style="font-size:16px"><b><u>Add Button (Manual Allocation)</u></b></p>
+    <p class="text-justify" style="font-size:16px">
+        Use this to manually place a subject into a specific slot.
+        <br><br>
+        <b>Steps:</b>
+        <ol style="font-size:16px; line-height:1.8;">
+            <li>In the subject configuration table below the timetable, <b>check the checkbox</b> next to the subject you want to place.</li>
+            <li>Select the <b>Day</b> (e.g., MON, TUE) from the dropdown.</li>
+            <li>Select the <b>From Period</b> and <b>To Period</b> to define the slot range.</li>
+            <li>Click <b>Add</b>. The system will allocate that subject to the chosen slot if the slot is free for both the class and the assigned faculty.</li>
+        </ol>
+        If the slot is already occupied or the faculty is not available at that time, the addition will be rejected.
+    </p>
 
     <p style="font-size:16px"><b><u>Delete Button</u></b></p>
     <p class="text-justify" style="font-size:16px">
-        Delete button will delete the selected configuration/period/day. 
+        Removes a previously allocated period from the timetable.
+        <br><br>
+        <b>Steps:</b>
+        <ol style="font-size:16px; line-height:1.8;">
+            <li>In the subject configuration table, <b>check the checkbox</b> next to the subject whose allocation you want to remove.</li>
+            <li>To delete a <b>specific slot</b>: select the Day, From Period, and To Period of the slot you want to clear, then click Delete.</li>
+            <li>To delete <b>all slots</b> of that subject at once: leave the Day/Period fields empty and click Delete.</li>
+        </ol>
+        Deleting a period also frees up the assigned faculty and lab room for that slot.
     </p>
+
     <p style="font-size:16px"><b><u>Delete All Button</u></b></p>
-    <p style="font-size:16px">
-       Delete All button will delete all the entries for the selected class
+    <p class="text-justify" style="font-size:16px">
+        <span style="color:red;"><b>Warning:</b></span> This clears <b>all allocated periods</b> for the currently selected class — the entire timetable for that class is reset to empty.
+        Faculty workloads are also reduced accordingly.
+        Use this when you want to start fresh for a particular class without affecting other classes.
     </p>
-    
+</div>
 </div>
 </div>
 
@@ -762,24 +791,24 @@ style="background-color:#1A6DC3;color:black; height:fit-content">
                 <td>
 
                     {% if access == 'dept_type' %}
-                    <select class="form-control" id="id_class" onchange="subjects()">
+                    <select class="form-control" id="id_class" onchange="subjects()" style="width:auto; min-width:220px;">
                         <option value='' disabled='disabled' selected='true'>Select class</option>
                         {% for i in all_class %}
                         <option value="{{ i }}">
                             {{ i }}
                         </option>
                         {% endfor %}
-                    </select>  
-                            
+                    </select>
+
                     {% else %}
-                    <select class="form-control" id="id_class" onchange="subjects()">
+                    <select class="form-control" id="id_class" onchange="subjects()" style="width:auto; min-width:220px;">
                         <option value='' disabled='disabled' selected='true'>Select class</option>
                         {% for i in all_class %}
                         <option value="{{ i.classname }}">
                             {{ i.classname }}
                         </option>
                         {% endfor %}
-                    </select> 
+                    </select>
 
                         
                     {% endif %}
@@ -894,10 +923,9 @@ style="background-color:#1A6DC3;color:black; height:fit-content">
                   </div>
                 </td>
 
-                <td>Lab:</td>
-                <td colspan="">
-                    
-                    <select class="form-control" id="id_lab">
+                <td style="width:1%; white-space:nowrap; padding-right:4px;">Lab:</td>
+                <td style="padding-left:0;">
+                    <select class="form-control" id="id_lab" style="min-width:200px; width:auto;">
 
                     </select>
                 </td>
@@ -921,9 +949,9 @@ style="background-color:#1A6DC3;color:black; height:fit-content">
                 <td colspan="5">
                 </td>
                
-                <td>Project:</td>
-                <td colspan="">
-                    <select class="form-control" id="id_spl" style="float:left">
+                <td style="width:1%; white-space:nowrap; padding-right:4px;">Project:</td>
+                <td style="padding-left:0;">
+                    <select class="form-control" id="id_spl" style="min-width:200px; width:auto;">
 
                     </select>
                 </td>

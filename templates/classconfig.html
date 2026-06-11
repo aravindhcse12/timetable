@@ -27,13 +27,9 @@ crossorigin="anonymous"></script>
 <script type="text/javascript">
 
 $(document).ready(function(){
-$("p").hide();
-$("#help_ul1").hide();
-$("#help_ul2").hide();
+$("#help_content").hide();
 $("#help").click(function(){
-$("p").toggle();
-$("#help_ul1").toggle();
-$("#help_ul2").toggle();
+$("#help_content").toggle();
 });
 });
 
@@ -152,6 +148,7 @@ $(document ).ready(function() {
                
                 //alert(theory_data);
             
+                $('#button1').prop('disabled', true);
                 $.ajax({
                 url: "/send",
                 type: "POST",
@@ -159,13 +156,12 @@ $(document ).ready(function() {
                 contentType: "application/json",
 
                 success: function(resp){
-                        //alert(resp);
-                        //$('#table-responsive1').hide();
                         $('#load_data').html(resp.data);
-                        //alert(resp.data);
-
                         if(resp.distinct) alert(resp.distinct);
                 },
+                complete: function(){
+                        $('#button1').prop('disabled', false);
+                }
                 });
             }//split periods not equal to total periods
             }// 0 present in arr
@@ -288,6 +284,7 @@ $(document ).ready(function() {
 
                         //alert(theory_data['type']);
 
+                        $('#button2').prop('disabled', true);
                         $.ajax({
                             url: "/send",
                             type: "POST",
@@ -295,16 +292,13 @@ $(document ).ready(function() {
                             contentType: "application/json",
 
                             success: function(resp){
-                                    //alert(resp);
-                                    //$('#table-responsive1').hide();
                                     $('#load_data').html(resp.data);
-                                    //alert(resp.data);
-                                    //$("#lab_list").reset();
-
                                     $("#textarea1").text("");
-
                                     if(resp.distinct) alert(resp.distinct);
                             },
+                            complete: function(){
+                                    $('#button2').prop('disabled', false);
+                            }
                         });
                         
                     }
@@ -402,20 +396,21 @@ $(document ).ready(function() {
                     };     
                      // alert(theory_data['table_name']);
         
+                    $('#button3').prop('disabled', true);
                     $.ajax({
                     url: "/send",
                     type: "POST",
                     data:JSON.stringify(theory_data),
                     contentType: "application/json",
-  
+
                     success: function(resp){
-                            //alert(resp);
-                            //$('#table-responsive1').hide();
                             $('#load_data').html(resp.data);
-                            //alert(resp.data);
                             if(resp.distinct) alert(resp.distinct);
                     },
-                    });             
+                    complete: function(){
+                            $('#button3').prop('disabled', false);
+                    }
+                    });
                 }          
             }
         }
@@ -513,49 +508,86 @@ $(document ).ready(function() {
 style="background-color:#1A6DC3;color:black;">
 <div class="jumbotron" style="margin:30px">
 <button id="help" type="button" class="btn btn-info">Help</button>
-    <br><br>
+<div id="help_content">
+    <br>
 
-    <p style="font-size:16px"><b><u>Configure Theory subjects</u></b></p>
-    <p style="font-size:16px">Select the Course and semister. </p>
-    <p class="text-justify" style="font-size:16px">Select Department, Faculty, subject(Theory) and set No. of periods: (for whole week), split periods</p>
-    <p class="text-justify" style="font-size:16px">Click on Add.</p>
-    
-   
-    <p style="font-size:16px"><b><u>Configure Lab subjects</u></b></p>
-    <p style="font-size:16px">Select the Course and semister. </p>
-    <p class="text-justify" style="font-size:16px">Select the Course, semister, Subject(Project) and set No. of periods: (for whole week), Count of faculty allotment, split periods.</p>
-    <p class="text-justify" style="font-size:16px">Click on Add.</p>
+    <p style="font-size:16px"><b><u>What is Class Configuration?</u></b></p>
+    <p class="text-justify" style="font-size:16px">
+        Class Configuration is the <b>first step before generating any timetable</b>.
+        Here you define which subjects are taught to each class, who teaches them, how many periods per week they require, and how those periods should be grouped (split).
+        Without completing this setup, the Auto Generate feature on the Timetable page will have nothing to schedule.
+    </p>
 
+    <p style="font-size:16px"><b><u>Configure Theory Subjects</u></b></p>
+    <p class="text-justify" style="font-size:16px">
+        Theory subjects are regular lecture periods taught by a single faculty member.
+        <br><br>
+        <b>Steps:</b>
+        <ol style="font-size:16px; line-height:1.8;">
+            <li>Select <b>Course</b> (e.g., B.Tech CSE) and <b>Semester</b> to filter the correct class.</li>
+            <li>Select <b>Department</b> and the <b>Faculty</b> who will teach this subject.</li>
+            <li>Select the <b>Subject</b> (Theory type).</li>
+            <li>Set <b>No. of Periods (per week)</b> — the total number of periods this subject needs in a week.</li>
+            <li>Set <b>Split Periods</b> — how those periods should be spread across the week (see Split Periods section below).</li>
+            <li>Click <b>Add</b>.</li>
+        </ol>
+    </p>
 
-     <p style="font-size:16px"><b><u>Configure project</u></b></p>
-     <p style="font-size:16px">Select the Course and semister. </p>
-     <p class="text-justify" style="font-size:16px"> Select the Course, semister, Subject(Project) and set No. of periods: (for whole week), Count of faculty allotment, split periods.</p>
-     <p class="text-justify" style="font-size:16px">Click on Add.</p>
+    <p style="font-size:16px"><b><u>Configure Lab Subjects</u></b></p>
+    <p class="text-justify" style="font-size:16px">
+        Lab subjects require consecutive periods in a dedicated lab room and may involve multiple faculty members.
+        <br><br>
+        <b>Steps:</b>
+        <ol style="font-size:16px; line-height:1.8;">
+            <li>Select <b>Course</b> and <b>Semester</b>.</li>
+            <li>Select the <b>Lab Subject</b> (Lab type).</li>
+            <li>Select the <b>Lab Room(s)</b> to be used.</li>
+            <li>Set <b>No. of Periods (per week)</b> — total lab periods needed per week.</li>
+            <li>Set <b>Count of Faculty</b> — number of faculty required to supervise the lab simultaneously.</li>
+            <li>Set <b>Split Periods</b> — lab periods are typically grouped together (e.g., <code>3</code> means one 3-period block per week).</li>
+            <li>Click <b>Add</b>. The system will automatically assign supporting faculty from the same department during timetable generation.</li>
+        </ol>
+    </p>
 
+    <p style="font-size:16px"><b><u>Configure Project</u></b></p>
+    <p class="text-justify" style="font-size:16px">
+        Project sessions are similar to labs — they need consecutive periods and can involve a guide/supervisor.
+        <br><br>
+        <b>Steps:</b>
+        <ol style="font-size:16px; line-height:1.8;">
+            <li>Select <b>Course</b> and <b>Semester</b>.</li>
+            <li>Select the <b>Project Subject</b>.</li>
+            <li>Set <b>No. of Periods (per week)</b>.</li>
+            <li>Set <b>Count of Faculty</b> — number of supervisors needed.</li>
+            <li>Set <b>Split Periods</b>.</li>
+            <li>Click <b>Add</b>. Faculty will be auto-assigned from the department during generation if not manually specified.</li>
+        </ol>
+    </p>
 
-     <p style="font-size:16px"><b><u>Split periods:</u></b> Set split periods field in such a way how you want to schedule</p>
-     <p class="text-justify" style="font-size: 16px;"> For Example: case-1
-         <ul id="help_ul1">
-         <li>If you set No. of periods: (for whole week) field to value 6.</li>
-         <li>And you want schedule each day a single period.</li>
-         <li>Then you have to fill the split periods field with value 1,1,1,1,1,1 </li>
-         </ul>
-     </p>
-     <p class="text-justify" style="font-size: 16px;"> For Example: case-2
-         <ul id="help_ul2">
-         <li>If you set No. of periods: (for whole week) field to value 6.</li>
-         <li>And you want schedule two continous periods in three days of week.</li>
-         <li>Then you have to fill the split periods field with value 2,2,2 </li>
-         </ul>
-     </p>
-     <p class="text-justify" style="font-size: 16px;"> Try out as many combinations as possible, but sum value of split period field should equal to value of No. of periods field. </p>   
+    <p style="font-size:16px"><b><u>Split Periods — How It Works</u></b></p>
+    <p class="text-justify" style="font-size:16px">
+        The <b>Split Periods</b> field controls how a subject's weekly periods are broken into blocks across different days.
+        Enter comma-separated values where each number is the size of one block.
+        <b>The sum of all split values must equal the total No. of Periods.</b>
+    </p>
+     <ul id="help_ul1" style="font-size:16px; line-height:1.8;">
+         <li><b>Example 1 — One period per day:</b> If a subject needs <b>6 periods/week</b> and you want one period on each of 6 days, set Split Periods to <code>1,1,1,1,1,1</code>.</li>
+         <li><b>Example 2 — Two consecutive periods per day:</b> If a subject needs <b>6 periods/week</b> and you want 2 back-to-back periods on 3 days, set Split Periods to <code>2,2,2</code>.</li>
+         <li><b>Example 3 — Lab block:</b> If a lab needs <b>3 periods/week</b> as a single continuous session, set Split Periods to <code>3</code>.</li>
+     </ul>
+     <ul id="help_ul2" style="font-size:16px; line-height:1.8;">
+         <li>You can mix block sizes: e.g., <code>2,1,1</code> means one 2-period block and two single periods (total = 4 periods/week).</li>
+         <li>Each block is placed on a <b>different day</b> — the scheduler will not put two blocks of the same subject on the same day.</li>
+     </ul>
 
     <p style="font-size:16px"><b><u>Delete Button</u></b></p>
     <p class="text-justify" style="font-size:16px">
-        Delete button will delete the selected class configuration. 
+        Removes a subject entry from the class configuration.
+        <b>Check the checkbox</b> next to the configuration row you want to remove and click <b>Delete</b>.
+        <br>
+        <span style="color:red;"><b>Note:</b></span> If the subject has already been scheduled in the timetable, delete its timetable entries first (on the Class-wise Timetable page) before deleting the configuration here.
     </p>
-
-    
+</div>
 </div>
 </div>
 
@@ -576,12 +608,12 @@ style="background-color:#1A6DC3;color:black;">
                         Course:
                     </td>
                     <td>
-                        <select class="form-control" id="id_course" onchange="selectsem()">
+                        <select class="form-control" id="id_course" onchange="selectsem()" style="width:auto; min-width:200px;">
                             <option value="" disabled="disabled" selected="true">Select course</option>
                             {%for i in all_course %}
                             <option value="{{i.name}}">{{i.name}}</option>
                             {% endfor %}
-                            
+
                         </select>
                     </td>
 
@@ -867,7 +899,7 @@ style="background-color:#1A6DC3;color:black;">
 
         //alert(jsonvar1);
 
-        var sem= "<option value='' disabled='disabled' selected='true'>Select lab</option>";
+        var sem= "<option value='' disabled='disabled' selected='true'>Select Semister</option>";
 
         //var arr1=new Array("1-1","1-2","2-1","2-2","3-1","3-2","4-1","4-2","5-1","5-2","6-1","6-2","7-1","7-2","8-1","8-2");
 

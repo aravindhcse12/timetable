@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Register</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css"
+        integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
+    <style>
+        .form-register {
+            padding: 20px;
+            margin-top: 80px;
+            background-color: #F5F5F5;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        #heading {
+            padding-bottom: 20px;
+        }
+
+        #top {
+            padding-left: 25%;
+        }
+
+        .type-badge {
+            font-size: 0.75rem;
+            padding: 3px 8px;
+            border-radius: 12px;
+            color: #fff;
+        }
+
+        .badge-faculty   { background-color: #28a745; }
+        .badge-dept      { background-color: #007bff; }
+        .badge-principal { background-color: #6f42c1; }
+
+        .type-info {
+            font-size: 0.82rem;
+            color: #666;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+
+<body style="background-color:#eef3f5;">
+
+    <div class="container-fluid">
+        <div class="Absolute-Center is-Responsive" id="top">
+            <div class="col-lg-8">
+
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                {% for category, message in messages %}
+                <div class="alert alert-{{ category if category != 'message' else 'info' }} alert-dismissable" role="alert">
+                    <button type="button" class="close" data-dismiss="alert" aria-label="close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    {{ message }}
+                </div>
+                {% endfor %}
+                {% endif %}
+                {% endwith %}
+
+                <form id="registerForm" class="form-register" method="post" action="{{ url_for('register_check') }}">
+
+                    <div class="d-flex justify-content-center align-items-center">
+                        <h2 id="heading" class="form-signin-heading"><strong>Register</strong></h2>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">Email address</label>
+                        <input type="email" id="email" name="email" class="form-control"
+                            placeholder="Enter email address" required autofocus
+                            value="{{ form_data.email if form_data else '' }}">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" name="password" class="form-control"
+                            placeholder="Enter password" required minlength="6">
+                        <small class="form-text text-muted">Minimum 6 characters.</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirm_password">Confirm Password</label>
+                        <input type="password" id="confirm_password" name="confirm_password" class="form-control"
+                            placeholder="Re-enter password" required>
+                        <div id="password-match-msg" class="type-info" style="display:none;"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="user_type">User Type</label>
+                        <select id="user_type" name="user_type" class="form-control" required>
+                            <option value="" disabled selected>-- Select Role --</option>
+                            <option value="faculty_type"
+                                {% if form_data and form_data.user_type == 'faculty_type' %}selected{% endif %}>
+                                Faculty
+                            </option>
+                            <option value="dept_type"
+                                {% if form_data and form_data.user_type == 'dept_type' %}selected{% endif %}>
+                                Department Admin
+                            </option>
+                            <option value="principal_type"
+                                {% if form_data and form_data.user_type == 'principal_type' %}selected{% endif %}>
+                                Principal
+                            </option>
+                        </select>
+                        <div id="type-description" class="type-info mt-1"></div>
+                    </div>
+
+                    <button class="btn btn-lg btn-success btn-block" type="submit">Create Account</button>
+
+                    <div class="text-center mt-3">
+                        <a href="{{ url_for('dashboard') }}" style="color:rgb(14,14,200)">Already have an account? Sign in</a>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.1.1.slim.min.js"
+        integrity="sha384-A7FZj7v+d/sdmMqp/nOQwliLvUsJfDHW+k9Omg/a/EheAdgtzNs3hpfag6Ed950n"
+        crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.min.js"
+        integrity="sha384-DztdAPBWPRXSA/3eYEEUWrWCy7G5KFbe8fFjk5JAIxUYHKkDx6Qin1DkWx51bBrb"
+        crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js"
+        integrity="sha384-vBWWzlZJ8ea9aCX4pEW3rVHjgjt7zpkNpZk+02D9phzyeVkE+jo0ieGizqPLForn"
+        crossorigin="anonymous"></script>
+
+    <script>
+        const typeDesc = {
+            faculty_type:   'Faculty can view their own personal timetable.',
+            dept_type:      'Department Admin can manage courses, subjects, and class timetables.',
+            principal_type: 'Principal has full access to view and manage all department timetables.'
+        };
+
+        document.getElementById('user_type').addEventListener('change', function () {
+            var desc = typeDesc[this.value] || '';
+            document.getElementById('type-description').textContent = desc;
+        });
+
+        document.getElementById('confirm_password').addEventListener('input', function () {
+            var pw  = document.getElementById('password').value;
+            var msg = document.getElementById('password-match-msg');
+            msg.style.display = 'block';
+            if (this.value === pw) {
+                msg.style.color   = 'green';
+                msg.textContent   = 'Passwords match.';
+            } else {
+                msg.style.color   = 'red';
+                msg.textContent   = 'Passwords do not match.';
+            }
+        });
+
+        document.getElementById('registerForm').addEventListener('submit', function (e) {
+            var pw  = document.getElementById('password').value;
+            var cpw = document.getElementById('confirm_password').value;
+            if (pw !== cpw) {
+                e.preventDefault();
+                var msg = document.getElementById('password-match-msg');
+                msg.style.display = 'block';
+                msg.style.color   = 'red';
+                msg.textContent   = 'Passwords do not match.';
+            }
+        });
+    </script>
+
+</body>
+</html>

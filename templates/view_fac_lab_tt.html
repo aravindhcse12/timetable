@@ -1,7 +1,6 @@
-
 {% if access == 'depttype' %}
 {% extends 'deptadmin.html' %}
-    
+
 {% else %}
    {% extends 'base.html' %}
 {% endif %}
@@ -13,11 +12,10 @@ src="https://code.jquery.com/jquery-3.2.1.min.js"
 integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
 crossorigin="anonymous"></script>
 
-
 <script type="text/javascript">
 
-$(document ).ready(function() {  
-    
+$(document ).ready(function() {
+
     $("#id_faculty").on('change',function(){
 
     var course= $('#id_faculty').val();
@@ -25,7 +23,7 @@ $(document ).ready(function() {
     //alert(concat);
     data1={table:course,status:"faculty"};
     //alert(data1['table']);
-          
+
            $.ajax({
               type: "POST",
               url: "/classtable_get",
@@ -37,8 +35,8 @@ $(document ).ready(function() {
                 $('#desc').html(resp.describe);
                 }
             });
-  
-      });   
+
+      });
 
       $("#id_lab").on('change',function(){
 
@@ -47,7 +45,7 @@ $(document ).ready(function() {
         //alert(concat);
         data1={table:lab,status:"lab"};
         //alert(data1['table']);
-      
+
        $.ajax({
           type: "POST",
           url: "/classtable_get",
@@ -60,8 +58,8 @@ $(document ).ready(function() {
             }
         });
 
-  });                
-    }); 
+  });
+    });
 
     </script>
 {% endblock %}
@@ -72,14 +70,10 @@ View Timetable
 
 {% block body %}
 
-
 <div class="container-fluid">
-
 
 <!-- Optional JavaScript -->
 <!-- jQuery first, then Popper.js, then Bootstrap JS -->
-
-
 
 <style>
 #customers {
@@ -175,11 +169,9 @@ padding: 20px;
 width:100%;
 }
 
-
 </style>
 
 <form id="TForm" method="post" novalidate>
-
 
 <h2>Timetable - <i>Faculty/Lab</i></h2>
 
@@ -194,7 +186,7 @@ width:100%;
                         <option value='' disabled='disabled' selected='true'>--select dept--</option>
                         {% for i in all_dept %}
                         <option value= {{i.branch}} > {{i.branch}} </option>
-                        {% endfor %} 
+                        {% endfor %}
                     </select>
                 </td>
                 <td>Fac:</td>
@@ -209,44 +201,38 @@ width:100%;
                         <option value='' disabled='disabled' selected='true'>--select lab--</option>
                         {% for i in all_lab %}
                         <option> {{i}} </option>
-                        {% endfor %} 
+                        {% endfor %}
                     </select>
                 </td>
-                
-            </tr> 
+
+            </tr>
         </table>
         </div>
 
-
-
         <table class="table table-bordered" id="myTable" style="background-color:white;">
-            
 
         </table>
         </div>
          <div class="table-responsive" id="" >
             <table class="table table-bordered" id="desc" style="background-color:white;">
-        </table>        
+        </table>
 </div>
-  
+
 </form>
 <script>
-   
+
     function faculty_dept()
     {
-        
+
         var dept=document.getElementById("id_dept").value;
         //alert(dept);
         var json_faculty_data= JSON.parse('{{ all_teacher | tojson | safe}}');
-      
-        
 
         //alert(json_faculty_data);
 
         str1="<option value='' disabled='disabled' selected='true'>Select Faculty</option>";
 
         var len=json_faculty_data.length;
-       
 
         for(i in json_faculty_data)
         {
@@ -257,19 +243,10 @@ width:100%;
             }
 
         }
-        
+
         //alert('faculty'+ document.getElementById("id_faculty").innerHTML);
 
     }
 
-
 </script>
 {% endblock %}
-
-
- 
-
-
-
-
-

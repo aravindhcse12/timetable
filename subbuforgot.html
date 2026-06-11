@@ -14,9 +14,9 @@ z
                 <i class="fas fa-envelope"></i>
             </label>
             <input type="email" name="email" placeholder="Enter email" id="email" required>
-            
+
             <center><input type="button"  class="next action-button" value="GET OTP"></center>
-        </form>  
+        </form>
     </div>
     <div class="otpForm" id="otpForm" hidden>
         <form action="{{ url_for('forgotpassword') }}" method="post" oninput='cnfrmpassword.setCustomValidity(cnfrmpassword.value != password.value ? "Passwords do not match." : "")'>
@@ -31,22 +31,22 @@ z
             <label for="password">
                 <i class="fas fa-lock"></i>
             </label>
-            <input type="password" name="password" placeholder="Password" id="password" required pattern="^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$" title="Minimum  8 characters of length ">             
+            <input type="password" name="password" placeholder="Password" id="password" required pattern="^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$" title="Minimum  8 characters of length ">
             <label for="cnfrmpassword">
                 <span class="input-group-text">
                     <i class="fa fa-lock"></i>
-                </span>          
-                
+                </span>
+
             </label>
-            <input type="password" name="cnfrmpassword" placeholder="Confirm Password" id="cnfrmpassword" required pattern="^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$" title="Minimum  8 characters of length "> 
+            <input type="password" name="cnfrmpassword" placeholder="Confirm Password" id="cnfrmpassword" required pattern="^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$" title="Minimum  8 characters of length ">
             <center><button type="button" class="otpSubmit action-button">SUBMIT</button></center>
 
-        </form> 
+        </form>
     </div>
     <script>
-        $(document).ready(function() 
+        $(document).ready(function()
         {
-            $(".next").click(function() 
+            $(".next").click(function()
             {
                 if(document.getElementById('username').value=='')
                 {
@@ -58,7 +58,7 @@ z
                 {
                     toastr.error("Email is Valid and Required");
                     document.getElementById('email').value.focus();
-                    
+
                     return;
                 }
                 $.ajax({
@@ -69,47 +69,46 @@ z
                     type : 'POST',
                     url : '/forgotpassword'
                 })
-                .done(function(data) 
-                {   
-                    if(data.otp=='success')   
+                .done(function(data)
+                {
+                    if(data.otp=='success')
                     {
                         document.getElementById("otpForm").hidden=false;
 
-                        document.getElementById('usernameForOtp').value=data.uname;                    
+                        document.getElementById('usernameForOtp').value=data.uname;
                         toastr.success("OTP Generated Successfully");
-                    } 
+                    }
                     if(data.msg)
                     {
                         toastr.error(data.msg);
                     }
-                       
-                    
+
                 });
             });
-            $(".otpSubmit").click(function() 
+            $(".otpSubmit").click(function()
             {
                 if(document.getElementById('otp').value=='' || document.getElementById('otp').value.toString().length!=4)
                 {
                     toastr.error("OTP  is Valid and Required");
                     document.getElementById('otp').value.focus();
-                    
+
                     return;
                 }
                 if(document.getElementById('password').value=='' || document.getElementById('password').value.toString().length<8)
                 {
                     toastr.error("Password  Required and Valid");
                     document.getElementById('password').value.focus();
-                    
+
                     return;
                 }
                 if(document.getElementById('cnfrmpassword').value=='' || document.getElementById('cnfrmpassword').value.toString().length<8)
                 {
                     toastr.error("Confirm Password  Required");
                     document.getElementById('cnfrmpassword').value.focus();
-                    
+
                     return;
                 }
-                
+
                 $.ajax({
                     data : {
                     uname : document.getElementById('usernameForOtp').value,
@@ -120,27 +119,27 @@ z
                     type : 'POST',
                     url : '/forgotpassword'
                 })
-                .done(function(data) 
-                {  
-                    if(data.error) 
+                .done(function(data)
+                {
+                    if(data.error)
                     {
                         toastr.error("OTP Does Not Match");
                     }
-                    if(data.success) 
+                    if(data.success)
                     {
                         toastr.success("OTP Verified Successfully");
                         window.location.href=data.url;
-                    }    
+                    }
                     if(data.msg)
                     {
                         toastr.error(data.msg);
-                    }               
-                        
+                    }
+
                 });
             });
-            
+
             event.preventDefault();
-                
+
         });
     </script>
 

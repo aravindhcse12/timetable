@@ -1,11 +1,9 @@
-
 {% if access == 'dept_type' %}
     {% extends 'deptadmin.html' %}
-        
+
 {% else %}
        {% extends 'base.html' %}
 {% endif %}
-
 
 {% block ajax %}
 <!-- this script is for classconfig.html to perform ajax operations -->
@@ -14,7 +12,6 @@ src="https://code.jquery.com/jquery-3.2.1.min.js"
 integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
 crossorigin="anonymous"></script>
 
-
 <script type="text/javascript">
      $(document).bind("ajaxSend", function(){
        $("#spinner").show();
@@ -22,9 +19,8 @@ crossorigin="anonymous"></script>
        $("#spinner").hide();
      });
 
-$(document ).ready(function() {  
+$(document ).ready(function() {
 
-  
     $("#id_faculty").on('change',function(){
 
         $("#textarea1").text(function(i,origText){
@@ -35,24 +31,22 @@ $(document ).ready(function() {
                 return $('#id_faculty').val();
             }
             else
-                return  origText+","+$('#id_faculty').val(); 
+                return  origText+","+$('#id_faculty').val();
     });
 
      //alert($("#textarea1").text());
 
     });
-    
-
 
     $("#id_class").on('change',function(){
 
     var course= $('#id_class').val();
- 
+
     //alert(concat);
     data1={table:course,status:"class"};
 
     //alert(data1['table']);
-          
+
            $.ajax({
               type: "POST",
               url: "/classtable_get",
@@ -63,10 +57,9 @@ $(document ).ready(function() {
                 $('#myTable').html(resp.data);
                 $('#desc').html(resp.describe);
 
-                
                 }
             });
-  
+
       });
 
       $('#generate').click(function(){
@@ -90,12 +83,12 @@ $(document ).ready(function() {
                     $('#desc').html(resp.describe);
                     $('#myTable').html(resp.data);
                     alert(resp.msg);
-                    
+
                 }
                 //window.location.reload(true);
                 $('#desc').html(resp.describe);
                 $('#myTable').html(resp.data);
-            
+
             },
             error: function(jqXHR, textStatus, errorThrown) {
                 alert(textStatus);}
@@ -120,12 +113,11 @@ $(document ).ready(function() {
 
                 success: function(resp){
                     //alert(resp.data)
-                    
+
                     $('#desc').html(resp.describe);
                     $('#myTable').html(resp.data);
                     window.location.reload(true);
 
-                  
                 },
                 error: function(jqXHR, textStatus, errorThrown) {
                     alert(textStatus);}
@@ -141,21 +133,21 @@ $(document ).ready(function() {
 
         if($('#id_class').val())
         {
-            
+
                 var ids = '';
                 var comma = '';
                 $("input:checkbox[id='delete']:checked").each(function() {
                     ids = ids + comma + this.value;
-                    comma = ',';			
+                    comma = ',';
 
                 });
-           
+
                 if(ids!='')
                 {
                         if($('#id_period_to').val()  && $('#id_period_from').val() && $('#id_day').val() )
                         {
                             var val=$('#id_class').val();
-                            data={ 
+                            data={
 
                                 class:$('#id_class').val() ,
                                 to:$('#id_period_to').val(),
@@ -178,26 +170,24 @@ $(document ).ready(function() {
                                 $('#myTable').html(resp.data);
 
                                 if(resp.msg){alert(resp.msg);}
-        
-    
+
                             },
                             error: function(jqXHR, textStatus, errorThrown) {
                                 alert(textStatus);}
                             });
-                                
+
                         }
                         else
                         {
 
                             let procceed = confirm("Some options still unfilled among following 'From day'/'period'/'To day'\nDo you wish to continue the checked subjects will get deleted");
 
-
                             if (procceed) {
                                 var val=$('#id_class').val();
-                            data={ 
+                            data={
 
                                 class:$('#id_class').val(),
-                                
+
                                 status:"only_id",
                                 ids:ids
                             };
@@ -213,8 +203,7 @@ $(document ).ready(function() {
                                 //window.location.reload(true);
                                 $('#desc').html(resp.describe);
                                 $('#myTable').html(resp.data);
-        
-    
+
                             },
                             error: function(jqXHR, textStatus, errorThrown) {
                                 alert(textStatus);}
@@ -222,24 +211,18 @@ $(document ).ready(function() {
                             }
                         }
 
-                    
-                       
-
                 }
                 else//id are present
                 {
                     alert('please select any checkbox to delete opertion');
                 }
 
-            
         }
-        else 
+        else
         {
             alert(" please select all the following options:class");
         }
         });
-
-        
 
     $('#get_excel').click(function(){
         var btn = $(this);
@@ -257,13 +240,11 @@ $(document ).ready(function() {
         }, 4000);
     });
 
-
-
       $('#delete_all_classes').click(function(){
 
                         //alert("success");
                         data={data: "dummy"
-            
+
                         };
 
                         $.ajax({
@@ -273,21 +254,18 @@ $(document ).ready(function() {
                         //contentType: "application/json",
 
                         success: function(resp){
-                            window.location.reload(true);        
+                            window.location.reload(true);
                         },
                         error: function(jqXHR, textStatus, errorThrown) {
                             alert(textStatus);}
                      });
 
-
       });
-
-
 
     $('#add1').click(function(){
 
-        if($('#id_class').val() != undefined && $('#id_day').val() != undefined && 
-            $('#id_period_from').val() !=undefined  && $('#id_theory').val() !=undefined && $('#id_period_to').val() !=undefined) 
+        if($('#id_class').val() != undefined && $('#id_day').val() != undefined &&
+            $('#id_period_from').val() !=undefined  && $('#id_theory').val() !=undefined && $('#id_period_to').val() !=undefined)
         {
 
             var json_config= JSON.parse('{{ all_classconfig | tojson | safe }}');
@@ -350,8 +328,6 @@ $(document ).ready(function() {
                             $('#desc').html(resp.describe);
                             $('#myTable').html(resp.data);
 
-
-
                             if(resp.class_occupied){ alert(resp.class_occupied);}
 
                             if(resp.fac_occupied) {alert(resp.fac_occupied);}
@@ -360,33 +336,29 @@ $(document ).ready(function() {
 
                             if(resp.day_error) {alert(resp.day_error);}
 
-                            if(resp.min_error){alert(resp.min_error);} 
+                            if(resp.min_error){alert(resp.min_error);}
 
                             if(resp.duplicate_faclty){ alert(resp.duplicate_faclty);}
-        
-
 
                             if(resp.day){ alert(resp.day); }
 
-                        
                 },
                 error: function(jqXHR, textStatus, errorThrown) {
 					alert(textStatus); }
-        }); 
-        
+        });
 
         }
         else alert("Cannot proceed!, Make sure all relevent field are set");
 
-    }); 
+    });
     $('#add2').click(function(){
 
         var json_config= JSON.parse('{{ all_classconfig | tojson | safe }}');
 
         var list=json_config.length;
 
-        if($('#id_class').val() != undefined && $('#id_day').val() != undefined && 
-            $('#id_period_from').val() !=undefined  && $('#id_lab').val() !=undefined && $('#id_period_to').val() !=undefined && $('#textarea1').text() !=undefined) 
+        if($('#id_class').val() != undefined && $('#id_day').val() != undefined &&
+            $('#id_period_from').val() !=undefined  && $('#id_lab').val() !=undefined && $('#id_period_to').val() !=undefined && $('#textarea1').text() !=undefined)
         {
                 //alert("succcess");
 
@@ -403,7 +375,7 @@ $(document ).ready(function() {
 
                 //alert("id"+id);
                 //alert($('#textarea1').text());
-            
+
                 theory_data={
 
                     class: $('#id_class').val(),
@@ -436,10 +408,10 @@ $(document ).ready(function() {
 
                             if(resp.day_error) {alert(resp.day_error);}
 
-                            if(resp.min_error){alert(resp.min_error);} 
+                            if(resp.min_error){alert(resp.min_error);}
 
                             if(resp.duplicate_faclty){ alert(resp.duplicate_faclty);}
-        
+
                             if(resp.max){ alert(resp.max);}
 
                             if(resp.day){ alert(resp.day); }
@@ -447,20 +419,19 @@ $(document ).ready(function() {
                                 $('#desc').html(resp.describe);
                                 $('#myTable').html(resp.data);
                                 $("#textarea1").text("");
-       
+
                                 },
                     error: function(jqXHR, textStatus, errorThrown) {
-                        alert(textStatus); 
+                        alert(textStatus);
                     }
                     });
-
 
         }
         else
         {
             alert("Cannot proceed!, Make sure all relevent field are set");
         }
-                            
+
         });//add2
 
         $('#add3').click(function(){
@@ -469,14 +440,13 @@ $(document ).ready(function() {
 
         var list=json_config.length;
 
-        if($('#id_class').val() != undefined && $('#id_day').val() != undefined && 
-            $('#id_period_from').val() !=undefined  && $('#id_period_to').val() !=undefined && $('#textarea1').text() !=undefined) 
+        if($('#id_class').val() != undefined && $('#id_day').val() != undefined &&
+            $('#id_period_from').val() !=undefined  && $('#id_period_to').val() !=undefined && $('#textarea1').text() !=undefined)
         {
                 //alert("add3");
 
                 var text= $('#id_spl').val();
                 const arr=text.split("--");
-
 
                 var index=arr[1];
 
@@ -486,7 +456,7 @@ $(document ).ready(function() {
 
                 //alert("id"+id);
                 //alert(arr);
-            
+
                 theory_data={
 
                     class: $('#id_class').val(),
@@ -508,7 +478,7 @@ $(document ).ready(function() {
                     contentType: "application/json",
 
                     success: function(resp){
-        
+
                                 if(resp.max){ alert(resp.max);}
 
                                 if(resp.collide){ alert(resp.collide); }
@@ -521,7 +491,7 @@ $(document ).ready(function() {
 
                                 if(resp.day_error) {alert(resp.day_error);}
 
-                                if(resp.min_error){alert(resp.min_error);} 
+                                if(resp.min_error){alert(resp.min_error);}
 
                                 if(resp.duplicate_faclty){ alert(resp.duplicate_faclty);}
 
@@ -530,26 +500,23 @@ $(document ).ready(function() {
                                 $('#desc').html(resp.describe);
                                 $('#myTable').html(resp.data);
                                 $("#textarea1").text("");
-       
+
                                 },
                     error: function(jqXHR, textStatus, errorThrown) {
-                        alert(textStatus); 
+                        alert(textStatus);
                     }
                     });
-
 
         }
         else
         {
             alert("Cannot proceed!, Make sure all relevent field are set");
         }
-                            
+
         });//add3
 
-    
     });//start
-                            
-                
+
     </script>
 {% endblock %}
 
@@ -559,14 +526,10 @@ Class-Wise Timetable
 
 {% block body %}
 
-
 <div class="container-fluid">
-
 
 <!-- Optional JavaScript -->
 <!-- jQuery first, then Popper.js, then Bootstrap JS -->
-
-
 
 <style>
 #customers {
@@ -662,7 +625,6 @@ padding: 20px;
 width:100%;
 }
 
-
 </style>
 <script>
 $(document).ready(function(){
@@ -674,11 +636,10 @@ $("#help_content").toggle();
 </script>
 <form id="TForm" method="post" novalidate>
 
-
 <h2>Class Schedule</h2>
 
 {% with messages = get_flashed_messages() %}
- 
+
 {% if messages %}
 
 {% for message in messages %}
@@ -692,17 +653,14 @@ $("#help_content").toggle();
     </button>
 {{message}}
 
-
 </div>
-
 
 {% endfor %}
 
 {% endif %}
 {% endwith %}
 
-
-<div class="jumbotron jumbotron-fluid" 
+<div class="jumbotron jumbotron-fluid"
 style="background-color:#1A6DC3;color:black; height:fit-content">
 <div class="jumbotron" style="margin:30px">
 <button id="help" type="button" class="btn btn-info">Help</button>
@@ -810,16 +768,12 @@ style="background-color:#1A6DC3;color:black; height:fit-content">
                         {% endfor %}
                     </select>
 
-                        
                     {% endif %}
 
-
                 </td>
-                
-               
-  
+
                 <td><button id = "btn_tt" type="button" class="btn btn-link"></button></td>
-                
+
                 <td><button id="get_excel" type="button" class="btn btn-primary">Export to Excel
                 </button></td>
 
@@ -847,25 +801,25 @@ style="background-color:#1A6DC3;color:black; height:fit-content">
                     <select class="form-control" id="id_period_from">
 
                         <option value='' disabled='disabled' selected='true'>Select Period</option>
-                        
+
                         {% for i in range(1,periods+1) %}
                             <option value="{{i}}">{{i}}</option>
                         {% endfor %}
-           
+
                     </select>
                 </td>
                 <td>
                     Prds to
                     </td>
                     <td >
-    
+
                         <select class="form-control" id="id_period_to">
                             <option value='' disabled='disabled' selected='true'>Select Period</option>
-                            
+
                             {% for i in range(1,periods+1) %}
                                 <option value="{{i}}">{{i}}</option>
                             {% endfor %}
-               
+
                         </select>
                     </td>
 
@@ -878,8 +832,6 @@ style="background-color:#1A6DC3;color:black; height:fit-content">
                                 <option value="{{i}}">{{i}}</option>
 
                         {% endfor %}
-
-                        
 
                     </select>
                 </td>
@@ -907,7 +859,7 @@ style="background-color:#1A6DC3;color:black; height:fit-content">
                         <option value='' disabled='disabled' selected='true'>--select dept--</option>
                         {% for i in all_dept %}
                         <option value= {{i.branch}} > {{i.branch}} </option>
-                        {% endfor %} 
+                        {% endfor %}
                     </select>
                 </td>
                 <td>Fac:</td>
@@ -919,7 +871,7 @@ style="background-color:#1A6DC3;color:black; height:fit-content">
                 <td>
                 <div class="form-outline">
                     <textarea height="auto" type="text" class="form-control" id="textarea1" rows="2"  style="display:block;" readonly></textarea>
-                    
+
                   </div>
                 </td>
 
@@ -930,12 +882,9 @@ style="background-color:#1A6DC3;color:black; height:fit-content">
                     </select>
                 </td>
 
-               
                 <td>
                     <button id="add2" type="button" class="btn btn-primary">Add</button>
                 </td>
- 
-                    
 
                 <td>
                     <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#myModal2">Delete all Classes</button>
@@ -948,7 +897,7 @@ style="background-color:#1A6DC3;color:black; height:fit-content">
             <tr>
                 <td colspan="5">
                 </td>
-               
+
                 <td style="width:1%; white-space:nowrap; padding-right:4px;">Project:</td>
                 <td style="padding-left:0;">
                     <select class="form-control" id="id_spl" style="min-width:200px; width:auto;">
@@ -961,7 +910,7 @@ style="background-color:#1A6DC3;color:black; height:fit-content">
                 </td>
 
             </tr>
-            
+
         </table>
 
         <center>
@@ -974,16 +923,13 @@ style="background-color:#1A6DC3;color:black; height:fit-content">
 
         <div class="table-responsive">
 
-
-
         <table class="table table-bordered" id="myTable" style="background-color:white;">
-       
 
         </table>
         </div>
         <div class="table-responsive" id="" >
             <table class="table table-bordered" id="desc" style="background-color:white;">
-        </table>   
+        </table>
 
         <!-- Modal -->
         <div id="myModal" class="modal fade" role="dialog">
@@ -992,7 +938,7 @@ style="background-color:#1A6DC3;color:black; height:fit-content">
         <!-- Modal content-->
         <div class="modal-content">
           <div class="modal-header" style="background-color:red;color:white;">
-  
+
             <h4 class="modal-title"><b> <span class="glyphicon glyphicon-warning-sign"></span> Warning...</b></h4>
           </div>
           <div class="modal-body">
@@ -1006,14 +952,13 @@ style="background-color:#1A6DC3;color:black; height:fit-content">
          </div>
       </div>
 
-
          <div id="myModal2" class="modal fade" role="dialog">
       <div class="modal-dialog">
 
         <!-- Modal content-->
         <div class="modal-content">
           <div class="modal-header" style="background-color:red;color:white;">
-            
+
             <h4 class="modal-title"><b> <span class="glyphicon glyphicon-warning-sign"></span> Warning...</b></h4>
           </div>
           <div class="modal-body">
@@ -1026,8 +971,6 @@ style="background-color:#1A6DC3;color:black; height:fit-content">
         </div>
          </div>
       </div>
-
-
 
         <div id="generateall" class="modal fade" role="dialog">
       <div class="modal-dialog">
@@ -1060,10 +1003,9 @@ style="background-color:#1A6DC3;color:black; height:fit-content">
 </div>
 <script>
 
-//all_config 
+//all_config
 function subjects()
 {
-
 
     var course_selected=document.getElementById("id_class").value;
 
@@ -1094,12 +1036,10 @@ function subjects()
         //alert(json_config[i][2]);
         if(json_config[i][4]==course_selected)
         {
-            
-            
+
             if(json_config[i][2]=="THEORY" || json_config[i][2].slice(0,8)=="ELECTIVE")
             {
-                str1+="<option value="+json_config[i][0]+"--"+i+">"+ json_config[i][1]+"--"+json_config[i][6]+"--"+json_config[i][3]+"--"+json_config[i][2]+"</option>";              
-
+                str1+="<option value="+json_config[i][0]+"--"+i+">"+ json_config[i][1]+"--"+json_config[i][6]+"--"+json_config[i][3]+"--"+json_config[i][2]+"</option>";
 
                 document.getElementById("id_theory").innerHTML=str1;
 
@@ -1120,39 +1060,34 @@ function subjects()
 
             }
             else break;
-           
+
         }
         else
         {
             //alert("no subject under this course");
-        
+
             document.getElementById("id_lab").innerHTML=str2;
             document.getElementById("id_theory").innerHTML=str1;
             document.getElementById("id_spl").innerHTML=str3;
         }
-      
+
         //alert(document.getElementById("id_theory").innerHTML);
 
- 
-        
     } //for
     //alert(document.getElementById("id_lab").innerHTML);
 }
     function faculty_dept()
     {
-        
+
         var dept=document.getElementById("id_dept").value;
         //alert(dept);
         var json_faculty_data= JSON.parse('{{ all_teacher | tojson | safe}}');
-      
-        
 
         //alert(json_faculty_data);
 
         str1="<option value='' disabled='disabled' selected='true'>Select Faculty</option>";
 
         var len=json_faculty_data.length;
-       
 
         for(i in json_faculty_data)
         {
@@ -1163,19 +1098,10 @@ function subjects()
             }
 
         }
-        
+
         //alert('faculty'+ document.getElementById("id_faculty").innerHTML);
 
     }
 
-
 </script>
 {% endblock %}
-
-
- 
-
-
-
-
-

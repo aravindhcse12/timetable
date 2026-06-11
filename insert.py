@@ -238,11 +238,3 @@ def create_table(name, periods, day):
         )
 
     mydb.commit()
-
-
-
-
-
-
-
-

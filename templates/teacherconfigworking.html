@@ -1,25 +1,17 @@
 {% if access == 'dept_type' %}
     {% extends 'deptadmin.html' %}
-        
+
 {% else %}
        {% extends 'base.html' %}
 {% endif %}
 
 {% block title %} Faculty Configuration {% endblock %}
- 
- 
- 
-{% block body %}
 
+{% block body %}
 
 <div class="container-fluid">
 
-
-
     <!-- Optional JavaScript -->
-
-
-    
 
     <h2>Faculty/Subject  Configuration</h2>
     <div class="jumbotron jumbotron-fluid" style="background-color:#1A6DC3; color:white; padding: 30px">
@@ -52,7 +44,6 @@
                         </datalist>
 
 					</td>
-                    
 
                     <td>
                         <label for="id_teacher">Subject :</label>
@@ -75,13 +66,10 @@
         </form>
             </div>
 
-
-
              <div class="table-responsive">
             <table id="load_data" class="table table-striped" style="background-color:white">
 
                 <caption id="cap"></caption>
-
 
             <thead>
               <tr>
@@ -93,9 +81,8 @@
             </thead>
 
             <tbody id="teacher_list">
-                {% for i in conf %}  
+                {% for i in conf %}
                 <tr>
-               
 
                     <td style="text-align:center">{{loop.index}}</td>
                     <td>{{i.name}}</td>
@@ -105,13 +92,10 @@
                             <input type="checkbox" value="24500">
                         </div>
                     </td>
-                    
+
                 </tr>
                 {% endfor %}
 
-
-                
-                
             </tbody>
             </table>
             </div>
@@ -136,11 +120,6 @@
   } );
   </script>
 
-
 </div>
-
-
-
-
 
 {% endblock %}

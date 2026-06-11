@@ -1,7 +1,4 @@
-
-
 {% extends 'base.html' %}
-
 
 {% block title %}
 Edit days/periods/Max_periods
@@ -13,20 +10,14 @@ Edit days/periods/Max_periods
     <!-- Optional JavaScript -->
     <!-- jQuery first, then Popper.js, then Bootstrap JS -->
 
-    
 <style>
     #jumbo {
         box-shadow: rgba(0, 0, 0, 0.05) 0px 6px 24px 0px, rgba(0, 0, 0, 0.08) 0px 0px 0px 1px;
     }
 
-
 </style>
 
-
 <form action="/edit_days_periods">
-
-
-
 
     <div class="jumbotron my-auto" id="jumbo">
 
@@ -88,7 +79,6 @@ Edit days/periods/Max_periods
             </table>
           </div>
 
-
           <div class="table-responsive">
             <table class="table" style="background-color:white" >
 
@@ -138,9 +128,8 @@ Edit days/periods/Max_periods
 
             <!-- Modal content-->
             <div class="modal-content">
-                
+
               <div class="modal-header" style="background-color:red;color:white;">
-                
 
                 <h4 class="modal-title"><b> <span class="glyphicon glyphicon-warning-sign"></span> Warning...</b></h4>
               </div>
@@ -208,7 +197,7 @@ Edit days/periods/Max_periods
         type: "POST",
         data:JSON.stringify(data),
         contentType: "application/json",
-       
+
         success: function (data) {
           $("#message").html(data.message);
          // alert($('#message').text())
@@ -223,5 +212,3 @@ Edit days/periods/Max_periods
     });
 </script>
 {% endblock %}
-
-

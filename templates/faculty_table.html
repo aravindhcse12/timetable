@@ -6,9 +6,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
       <title>Faculty table</title>
-        
+
         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
-       
 
 </head>
 <body style="background-color:#103849 ;">
@@ -25,29 +24,26 @@
                 </td>
 
                 <td style="padding-left:10%">
-                    <a class="navbar-brand" href="{{url_for('logout')}}"><button type="button" class="btn btn-warning" data-toggle="modal" data-target="#myModal">LOGOUT</button></a> 
+                    <a class="navbar-brand" href="{{url_for('logout')}}"><button type="button" class="btn btn-warning" data-toggle="modal" data-target="#myModal">LOGOUT</button></a>
                 </td>
-            </tr>  
+            </tr>
             <tr>
                 <td>
                     <b>Designation:</b> {{designation}}
                 </td>
                 <td>
                     <b>Work_load:</b> {{work_load}}
-                </td>  
-                <td style="padding-left:10%">                                     
-                    <a class="navbar-brand" href="/change_faculty_password"><button type="button" class="btn btn-info" >Change Password</button></a>                       
                 </td>
-            </tr> 
-            
-            
+                <td style="padding-left:10%">
+                    <a class="navbar-brand" href="/change_faculty_password"><button type="button" class="btn btn-info" >Change Password</button></a>
+                </td>
+            </tr>
+
         </table>
     </div>
 
-
 <table class="table table-bordered" id="myTable" style="background-color:white;">
-    
-    
+
     <thead>
         <tr>
             {% for j in range(periods+1) %}
@@ -59,13 +55,13 @@
 
                 {% endif %}
 
-            {% endfor %}	
+            {% endfor %}
         </tr>
     </thead>
 
     <tbody>
     {% for i in fac %}
-        
+
                 <tr  height="80px">
 
                     {% for j in range(periods+1)%}
@@ -76,22 +72,20 @@
                             <td >{{i[j]}}</td>
                         {% endif%}
 
-
-                    {% endfor %}	
-                </tr> 
+                    {% endfor %}
+                </tr>
 
     {% endfor %}
 
 </tbody>
 </table>
 
-
 <table class="table table-bordered" style="background-color:white">
 
     <thead>
     <tr style="text-align:center; background-color: #4CAF50;color:white">
-        
-        <th>faculty</th>        
+
+        <th>faculty</th>
         <th>class</th>
         <th>subject</th>
         <th>type</th>
@@ -118,7 +112,7 @@
             {% endif %}
 
             <td>{{ i.dayperiod }}</td>
-        </tr> 
+        </tr>
         {% endif %}
     {% endfor %}
     </tbody>

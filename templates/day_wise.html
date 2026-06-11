@@ -1,11 +1,9 @@
-
 {% if access == 'dept_type' %}
 {% extends 'deptadmin.html' %}
-    
+
 {% else %}
    {% extends 'base.html' %}
 {% endif %}
-
 
 {% block title %}
 Day wise reports
@@ -17,17 +15,16 @@ src="https://code.jquery.com/jquery-3.2.1.min.js"
 integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
 crossorigin="anonymous"></script>
 
-
 <script type="text/javascript">
-$(document ).ready(function() { 
+$(document ).ready(function() {
 $("#day").on('change',function(){
     //alert("hai");
     var day= $('#day').val();
-   
+
     data1={day:day,status:"day_wise",dept:$('#dept').val(),course:$('#course').val(),sem:$('#sem').val()};
 
     //alert(data1['table']);
-          
+
            $.ajax({
               type: "POST",
               url: "/get_report",
@@ -39,9 +36,8 @@ $("#day").on('change',function(){
                 //$('#course').html(resp.course);
                 }
             });
-  
-      });
 
+      });
 
 $("#dept").on('change',function(){
 //alert("hai");
@@ -70,7 +66,7 @@ if($('#day').val())
         }
 
     }
-    
+
     $.ajax({
             type: "POST",
             url: "/get_report",
@@ -94,9 +90,9 @@ var course= $('#course').val();
 
 if($('#day').val())
 {
-    
+
     data1={day:$('#day').val(),status:"day_wise",dept:$('#dept').val(),course:$('#course').val(),sem:$('#sem').val()};
-        
+
     $.ajax({
             type: "POST",
             url: "/get_report",
@@ -114,9 +110,6 @@ else
 }
 });
 
-
-
-
 $("#sem").on('change',function(){
 //alert("hai");
 var sem= $('#sem').val();
@@ -126,7 +119,7 @@ var sem= $('#sem').val();
         //ok
 
         data1={day:$('#day').val(),status:"day_wise",dept:$('#dept').val(),course:$('#course').val(),sem:$('#sem').val()};
-            
+
         $.ajax({
                 type: "POST",
                 url: "/get_report",
@@ -145,7 +138,6 @@ var sem= $('#sem').val();
 
 });
 
-
       $("#myInput").on("keyup", function() {
       var value = $(this).val().toLowerCase();
 
@@ -153,15 +145,14 @@ var sem= $('#sem').val();
          $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
       });
    });
-    }); 
-    
-    
+    });
+
 </script>
 {% endblock %}
 {% block body %}
 
 <div class="container-fluid">
-    
+
 <style>
     #jumbo {
         box-shadow: rgba(0, 0, 0, 0.05) 0px 6px 24px 0px, rgba(0, 0, 0, 0.08) 0px 0px 0px 1px;
@@ -181,19 +172,18 @@ var sem= $('#sem').val();
         <select class="form-control" id="day" name="day">
             <option value='' disabled='disabled' selected='true'>Select Day</option>
 
-
             {% for i in day_list %}
             <option value="{{i}}">{{i}}</option>
 
             {% endfor %}
-            
+
         </select>
     </td>
 
     <td align="right" width=20%>
         <h4>Department :</h4>
         </td>
-                
+
     <td align="right">
         <select class="form-control" id="dept" name="dept">
         <option value='' disabled='disabled' selected='true'>Select Department</option>
@@ -202,7 +192,7 @@ var sem= $('#sem').val();
         <option value="{{i.name}}">{{i.name}}</option>
 
         {% endfor %}
-            
+
         </select>
     </td>
 
@@ -217,21 +207,21 @@ var sem= $('#sem').val();
         <td align="right"  >
             <select class="form-control" id="course" name="course">
             <option value='' disabled='disabled' selected='true'>Select Course</option>
-                
+
             </select>
         </td>
 
     <td align="right" width=20%>
         <h4>Semisters :</h4>
         </td>
-    
+
             <td align="right"  >
                 <select class="form-control" id="sem" name="sem">
                     <option value='' disabled='disabled' selected='true'>Odd/Even</option>
 
                     <option>Odd</option>
                     <option>Even</option>
-                    
+
                 </select>
             </td>
     <td>
@@ -243,17 +233,17 @@ var sem= $('#sem').val();
     <input type="text" class="form-control" id="myInput"/>
     <div class="table-responsive" id="" >
         <table class="table table-bordered" id="desc" style="background-color:white;">
-    </table>        
+    </table>
     </div>
     </div>
     <center>
         <div id="spinner" style="display:none;" align="center">
         <img id="img-spinner" align="center" height="20%" width="20%" src="{{ url_for('static', filename='spin.gif') }}" alt="Loading"/>
-                            
+
         </div>
 
     </center>
-     
+
     </div>
     </div>
     <br/>
@@ -264,17 +254,10 @@ var sem= $('#sem').val();
        $("#spinner").hide();
      });
 
-
 </script>
-
-
 
 </div>
 
-
 </script>
-
-
-
 
 {% endblock %}

@@ -1,14 +1,12 @@
 {% if access == 'dept_type' %}
     {% extends 'deptadmin.html' %}
-        
+
 {% else %}
        {% extends 'base.html' %}
 {% endif %}
 
 {% block title %} Class configuration {% endblock %}
- 
- 
- 
+
 {% block body %}
 <div class="container-fluid">
 <h2>Class Configuration</h2>
@@ -46,21 +44,20 @@
                             {%for i in all_course %}
                             <option value="{{i.name}}">{{i.name}}</option>
                             {% endfor %}
-                            
+
                         </select>
                     </td>
 
- 
                     <td align ="right">
                         semister:
                     </td>
 
                     <td>
                         <select class="form-control" id="id_sem">
-                            
+
                         </select>
                     </td>
-            
+
                 </tr>
             </table>
             </div>
@@ -75,7 +72,7 @@
                             <datalist id="teacher_list">
                                 {% for i in all_teacher %}
                                 <option value="{{i.name}}">{{i.name}}</option>
-                                {% endfor %}                            
+                                {% endfor %}
                             </datalist>
 
                     </td>
@@ -89,7 +86,7 @@
                                             <option value="{{i.name}}">{{i.name}}</option>
                                         {% endfor %}
 
-                            </datalist>                            
+                            </datalist>
                     </td>
                     <td>
                      <label for="periods">No. of periods: (for whole week)</label>
@@ -190,8 +187,6 @@
         alert(str1);
 
         document.getElementById('id_sem').innerHTML=str1;
-
-
 
     }
 </script>>

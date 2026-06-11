@@ -1,4 +1,3 @@
-
             {% set count=[0] %}
             {% for i in all_data %}
             {% if i.classname == table %}
@@ -15,9 +14,6 @@
                 <td>{{i.split}}</td>
                 <td><input type="checkbox"  name="row-check" value="{{i.id}}"></td>
             {% endif %}
-            </tr> 
-        
+            </tr>
+
             {% endfor %}
-
-
-

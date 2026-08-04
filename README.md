@@ -77,3 +77,7 @@ The app starts in debug mode on `http://0.0.0.0:5000`.
 
 - `.gitignore` excludes `.venv/`, `*.pyc`, `*.xlsx`, and `*.db` — generated reports and the database are expected to be local/regenerated rather than committed.
 - Several loose `.xlsx` timetable/faculty reports in the repo root are generated output, not source files.
+
+## Video Demo
+
+- https://drive.google.com/file/d/14cR8jXiR3fPqS6XXBOHbrWvVFS01bwuI/view
